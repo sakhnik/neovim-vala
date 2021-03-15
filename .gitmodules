@@ -1,0 +1,3 @@
+[submodule "vapis"]
+	path = vapi
+	url = https://gitlab.gnome.org/GNOME/vala-extra-vapis
