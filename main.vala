@@ -47,6 +47,9 @@ class NeovimVala : GLib.Object {
 
             // stdout:
             IOChannel output = new IOChannel.unix_new (standard_output);
+            output.set_encoding (null);
+            output.set_buffered (false);
+
             // stderr:
             IOChannel error = new IOChannel.unix_new (standard_error);
             error.add_watch (IOCondition.IN | IOCondition.HUP, (channel, condition) => {
@@ -54,6 +57,8 @@ class NeovimVala : GLib.Object {
             });
 
             IOChannel input = new IOChannel.unix_new (standard_input);
+            input.set_encoding (null);
+            input.set_buffered (false);
 
             ChildWatch.add (child_pid, (pid, status) => {
                 // Triggered when the child indicated by child_pid exits
@@ -74,17 +79,20 @@ class NeovimVala : GLib.Object {
 
             rpc.request (
                 (packer) => {
-                    packer.pack_str ("nvim_ui_attach".length);
-                    packer.pack_str_body ((uint8[])"nvim_ui_attach");
+                    unowned uint8[] ui_attach = "nvim_ui_attach".data;
+                    packer.pack_str (ui_attach.length);
+                    packer.pack_str_body (ui_attach);
                     packer.pack_array(3);
                     packer.pack_int (80);
                     packer.pack_int (25);
                     packer.pack_map (2);
-                    packer.pack_str (3);
-                    packer.pack_str_body ((uint8[])"rgb");
+                    unowned uint8[] rgb = "rgb".data;
+                    packer.pack_str (rgb.length);
+                    packer.pack_str_body (rgb);
                     packer.pack_true ();
-                    packer.pack_str ("ext_linegrid".length);
-                    packer.pack_str_body ((uint8[])"ext_linegrid");
+                    unowned uint8[] ext_linegrid = "ext_linegrid".data;
+                    packer.pack_str (ext_linegrid.length);
+                    packer.pack_str_body (ext_linegrid);
                     packer.pack_true ();
                 },
                 (err, resp) => {
@@ -98,6 +106,8 @@ class NeovimVala : GLib.Object {
 
             loop.run ();
         } catch (SpawnError e) {
+            print ("Error: %s\n", e.message);
+        } catch (IOChannelError e) {
             print ("Error: %s\n", e.message);
         }
         return 0;

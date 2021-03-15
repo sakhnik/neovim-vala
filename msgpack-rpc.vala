@@ -40,9 +40,10 @@ class MsgpackRpc : GLib.Object {
             }
 
             try {
-                string data;
-                channel.read_line (out data, null, null);
-                _handle_data(data);
+                _unp.reserve_buffer (1024);
+                size_t bytes_read;
+                channel.read_chars ((char[])_unp.buffer (), out bytes_read);
+                _handle_data(bytes_read);
             } catch (IOChannelError e) {
                 print ("IOChannelError: %s\n", e.message);
                 return false;
@@ -53,7 +54,9 @@ class MsgpackRpc : GLib.Object {
 
             return true;
         });
+    }
 
+    private void start_writing () {
         _input.add_watch (IOCondition.OUT | IOCondition.HUP, (channel, condition) => {
             if (condition == IOCondition.HUP) {
                 print ("The fd has been closed.\n");
@@ -94,16 +97,19 @@ class MsgpackRpc : GLib.Object {
             foreach (uint8 b in data) {
                 _out_buffer += b;
             }
+            print ("buf +%d %d\n", data.length, _out_buffer.length);
             return 0;
         });
         packer.pack_array (4);
-        packer.pack_uint32 (0);
+        packer.pack_int (0);
         packer.pack_uint32 (seq);
         pack_request (packer);
+
+        start_writing ();
     }
 
-    private void _handle_data(string data) {
-        _unp.buffer_consumed(data.length);
+    private void _handle_data(size_t bytes_read) {
+        _unp.buffer_consumed(bytes_read);
 
         MessagePack.Unpacked result;
         while (true) {
