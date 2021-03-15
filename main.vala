@@ -67,6 +67,8 @@ class NeovimVala : GLib.Object {
                 print ("notification %s\n", method);
             });
 
+            rpc.start ();
+
             //ioctl(STDOUT_FILENO, TIOCGWINSZ, &_size);
             //_grid.resize(_size.ws_col * _size.ws_col);
 

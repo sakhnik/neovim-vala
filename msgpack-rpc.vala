@@ -1,5 +1,8 @@
 class MsgpackRpc : GLib.Object {
 
+    private IOChannel _input;
+    private IOChannel _output;
+
     public delegate void OnNotificationType (string method, MessagePack.Object data);
     private unowned OnNotificationType _on_notification;
 
@@ -20,12 +23,17 @@ class MsgpackRpc : GLib.Object {
             this.on_response = (owned) on_response;
         }
     }
-    private HashTable<uint32, RequestData> _requests = new HashTable<uint32, RequestData> (int_hash, int_equal);
+    private HashTable<uint32, RequestData> _requests = new HashTable<uint32, RequestData> (direct_hash, direct_equal);
 
 
     public MsgpackRpc(IOChannel input, IOChannel output) {
+        _input = input;
+        _output = output;
+    }
 
-        output.add_watch (IOCondition.IN | IOCondition.HUP, (channel, condition) => {
+    public void start () {
+
+        _output.add_watch (IOCondition.IN | IOCondition.HUP, (channel, condition) => {
             if (condition == IOCondition.HUP) {
                 print ("The fd has been closed.\n");
                 return false;
@@ -46,7 +54,7 @@ class MsgpackRpc : GLib.Object {
             return true;
         });
 
-        input.add_watch (IOCondition.OUT | IOCondition.HUP, (channel, condition) => {
+        _input.add_watch (IOCondition.OUT | IOCondition.HUP, (channel, condition) => {
             if (condition == IOCondition.HUP) {
                 print ("The fd has been closed.\n");
                 return false;
@@ -58,7 +66,7 @@ class MsgpackRpc : GLib.Object {
 
             try {
                 size_t len;
-                input.write_chars ((char[])_out_buffer, out len);
+                _input.write_chars ((char[])_out_buffer, out len);
                 int new_len = (int) (_out_buffer.length - len);
                 _out_buffer.move ((int)len, 0, new_len);
                 _out_buffer.resize (new_len);
