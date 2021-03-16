@@ -1,3 +1,5 @@
+using MessagePack;
+
 class MsgpackRpc : GLib.Object {
 
     private IOChannel _input;
@@ -12,7 +14,7 @@ class MsgpackRpc : GLib.Object {
 
     public delegate void OnResponseType (MessagePack.Object err, MessagePack.Object resp);
 
-    private MessagePack.Unpacker _unp = new MessagePack.Unpacker ();
+    private Unpacker _unp = new Unpacker ();
     private uint32 _seq = 0;
     private uint8[] _out_buffer = {};
 
@@ -85,19 +87,18 @@ class MsgpackRpc : GLib.Object {
         });
     }
 
-    public delegate void PackRequestType (MessagePack.Packer packer);
+    public delegate void PackRequestType (Packer packer);
 
     public void request (PackRequestType pack_request, owned OnResponseType on_response) {
         var seq = _seq++;
         _requests.set (seq, new RequestData ((owned)on_response));
 
         // serializes multiple objects using msgpack::packer.
-        MessagePack.Packer packer = new MessagePack.Packer ((data) => {
+        Packer packer = new Packer ((data) => {
             // TODO Use memcpy
             foreach (uint8 b in data) {
                 _out_buffer += b;
             }
-            print ("buf +%d %d\n", data.length, _out_buffer.length);
             return 0;
         });
         packer.pack_array (4);
@@ -111,10 +112,10 @@ class MsgpackRpc : GLib.Object {
     private void _handle_data(size_t bytes_read) {
         _unp.buffer_consumed(bytes_read);
 
-        MessagePack.Unpacked result;
+        Unpacked result;
         while (true) {
             var res = _unp.next (out result);
-            if (res != MessagePack.UnpackReturn.SUCCESS) {
+            if (res != UnpackReturn.SUCCESS) {
                 break;
             }
 

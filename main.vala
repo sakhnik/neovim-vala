@@ -25,6 +25,9 @@ class NeovimVala : GLib.Object {
     public static int main(string[] args) {
 
         Intl.setlocale(LocaleCategory.CTYPE, "");
+
+        Gtk.init ();
+
         MainLoop loop = new MainLoop ();
         try {
             string[] spawn_args = {"nvim", "--embed"};
@@ -74,9 +77,6 @@ class NeovimVala : GLib.Object {
 
             rpc.start ();
 
-            //ioctl(STDOUT_FILENO, TIOCGWINSZ, &_size);
-            //_grid.resize(_size.ws_col * _size.ws_col);
-
             rpc.request (
                 (packer) => {
                     unowned uint8[] ui_attach = "nvim_ui_attach".data;
@@ -104,12 +104,16 @@ class NeovimVala : GLib.Object {
                     }
                 });
 
+            var mainapp = new Renderer();
+            mainapp.present ();
+
             loop.run ();
         } catch (SpawnError e) {
             print ("Error: %s\n", e.message);
         } catch (IOChannelError e) {
             print ("Error: %s\n", e.message);
         }
+
         return 0;
     }
 }

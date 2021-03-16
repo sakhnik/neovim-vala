@@ -8,9 +8,12 @@ dependencies = [
     dependency('glib-2.0'),
     dependency('gobject-2.0'),
     dependency('gio-2.0'),
+    dependency('gtk4'),
+    dependency('cairo'),
+    dependency('pango'),
     dependency('msgpack'),
 ]
 
-sources = files('main.vala', 'msgpack-rpc.vala')
+sources = files('main.vala', 'msgpack-rpc.vala', 'renderer.vala')
 
 executable('nvv', sources, dependencies: dependencies)
