@@ -70,42 +70,12 @@ class NeovimVala : GLib.Object {
             });
 
             MsgpackRpc rpc = new MsgpackRpc (input, output);
+            Renderer renderer = new Renderer (rpc);
 
-            rpc.set_on_notification ((method, obj) => {
-                print ("notification %s\n", method);
-            });
+            renderer.attach_ui ();
 
-            rpc.start ();
-
-            rpc.request (
-                (packer) => {
-                    unowned uint8[] ui_attach = "nvim_ui_attach".data;
-                    packer.pack_str (ui_attach.length);
-                    packer.pack_str_body (ui_attach);
-                    packer.pack_array(3);
-                    packer.pack_int (80);
-                    packer.pack_int (25);
-                    packer.pack_map (2);
-                    unowned uint8[] rgb = "rgb".data;
-                    packer.pack_str (rgb.length);
-                    packer.pack_str_body (rgb);
-                    packer.pack_true ();
-                    unowned uint8[] ext_linegrid = "ext_linegrid".data;
-                    packer.pack_str (ext_linegrid.length);
-                    packer.pack_str_body (ext_linegrid);
-                    packer.pack_true ();
-                },
-                (err, resp) => {
-                    if (err.type != MessagePack.Type.NIL) {
-                        printerr ("Failed to attach UI ");
-                        //err.print (stderr);
-                        printerr ("\n");
-                        //throw new SpawnError.FAILED ("");
-                    }
-                });
-
-            var renderer = new Renderer();
-            renderer.present ();
+            var window = new Window ();
+            window.present ();
 
             loop.run ();
         } catch (SpawnError e) {

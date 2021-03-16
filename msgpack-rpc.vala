@@ -5,7 +5,7 @@ class MsgpackRpc : GLib.Object {
     private IOChannel _input;
     private IOChannel _output;
 
-    public delegate void OnNotificationType (string method, MessagePack.Object data);
+    public delegate void OnNotificationType (uint8[] method, MessagePack.Object data);
     private unowned OnNotificationType _on_notification;
 
     public void set_on_notification (OnNotificationType on_notification) {
@@ -129,7 +129,7 @@ class MsgpackRpc : GLib.Object {
                 _requests.remove (seq);
             } else if (arr.objects[0].u64 == 2) {
                 // Notification
-                _on_notification((string)arr.objects[1].str.str, arr.objects[2]);
+                _on_notification(arr.objects[1].str.str, arr.objects[2]);
             }
         }
     }
