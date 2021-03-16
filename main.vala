@@ -104,8 +104,8 @@ class NeovimVala : GLib.Object {
                     }
                 });
 
-            var mainapp = new Renderer();
-            mainapp.present ();
+            var renderer = new Renderer();
+            renderer.present ();
 
             loop.run ();
         } catch (SpawnError e) {
