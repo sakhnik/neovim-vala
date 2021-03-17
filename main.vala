@@ -30,7 +30,7 @@ class NeovimVala : GLib.Object {
 
         MainLoop loop = new MainLoop ();
         try {
-            string[] spawn_args = {"nvim", "--embed"};
+            string[] spawn_args = {"nvim", "--embed", "--listen", "127.0.0.1:4444"};
             string[] spawn_env = Environ.get ();
             Pid child_pid;
 
@@ -74,7 +74,7 @@ class NeovimVala : GLib.Object {
 
             renderer.attach_ui ();
 
-            var window = new Window ();
+            var window = new Window (renderer);
             window.present ();
 
             loop.run ();

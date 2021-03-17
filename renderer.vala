@@ -3,16 +3,16 @@ class Renderer : GLib.Object {
 
     private unowned MsgpackRpc _rpc;
 
-    private uint32 _fg = 0xffffff;
-    private uint32 _bg = 0;
+    //private uint32 _fg = 0xffffff;
+    //private uint32 _bg = 0;
 
     private class _HlAttr {
-        bool _has_fg = false;
-        uint32 _fg = 0;
-        bool _has_bg = false;
-        uint32 _bg = 0;
-        bool bold = false;
-        bool reverse = false;
+        //bool _has_fg = false;
+        //uint32 _fg = 0;
+        //bool _has_bg = false;
+        //uint32 _bg = 0;
+        //bool bold = false;
+        //bool reverse = false;
     }
 
     private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
@@ -20,13 +20,18 @@ class Renderer : GLib.Object {
     private uint32 _width = 80;
     private uint32 _height = 25;
 
-    private struct _Cell {
+    public struct Cell {
         string text;
         uint64 hl_id;
     }
 
-    private _Cell[,] _grid;
+    private Cell[,] _grid;
 
+    public unowned Cell[,] get_grid () {
+        return _grid;
+    }
+
+    public signal void flush ();
 
     public Renderer (MsgpackRpc rpc) {
         _rpc = rpc;
@@ -38,7 +43,7 @@ class Renderer : GLib.Object {
         _rpc.set_on_notification (on_notification);
         _rpc.start ();
 
-        _grid = new _Cell[_width, _height];
+        _grid = new Cell[_width, _height];
 
         _rpc.request (
             (packer) => {
@@ -89,7 +94,7 @@ class Renderer : GLib.Object {
             unowned var event = arr[i].array.objects;
             unowned var subtype = event[0].str.str;
             if (memEqual (subtype, "flush".data)) {
-                handler = flush;
+                handler = handle_flush;
             } else if (memEqual (subtype, "grid_line".data)) {
                 handler = grid_line;
             }
@@ -125,9 +130,9 @@ class Renderer : GLib.Object {
         }
     }
 
-    private void flush (MessagePack.Object[]? event) {
-        // TODO: fire a signal
-        print ("flush\n");
+    private void handle_flush (MessagePack.Object[]? event) {
+        print ("*** flush\n");
+        flush ();
     }
 
     //void _GridCursorGoto(const msgpack::object_array &event)
@@ -173,8 +178,7 @@ class Renderer : GLib.Object {
             }
 
             int64 start_col = col;
-            _Cell buf_cell = {};
-            buf_cell.hl_id = hl_id;
+            Cell buf_cell = Cell() {hl_id = hl_id};
             uint8[] char_buf = {};
             for (size_t i = 0; i < text.length; ++i) {
                 uint8 ch = text[i];
