@@ -1,5 +1,6 @@
 
 class Renderer : GLib.Object {
+
     private unowned MsgpackRpc _rpc;
 
     private uint32 _fg = 0xffffff;
@@ -21,7 +22,7 @@ class Renderer : GLib.Object {
 
     private struct _Cell {
         string text;
-        uint32 hl_id;
+        uint64 hl_id;
     }
 
     private _Cell[,] _grid;
@@ -67,36 +68,38 @@ class Renderer : GLib.Object {
             });
     }
 
-    private void on_notification (uint8[] method, MessagePack.Object obj) {
-        unowned uint8[] redraw = "redraw".data;
+    private static bool memEqual (uint8[] a, uint8[] b) {
+        return a.length == b.length && 0 == Memory.cmp(a, b, a.length);
+    }
 
-        if (method.length != redraw.length || 0 != Memory.cmp(method, redraw, redraw.length)) {
+    private delegate void HandlerType (MessagePack.Object[]? event);
+
+    private void on_notification (uint8[] method, MessagePack.Object obj) {
+
+        if (!memEqual(method, "redraw".data)) {
             print ("Unexpected notification %.*s\n", method.length, method);
             return;
         }
 
         unowned var arr = obj.array.objects;
         for (size_t i = 0; i < arr.length; ++i) {
+
+            HandlerType handler = null;
+
             unowned var event = arr[i].array.objects;
             unowned var subtype = event[0].str.str;
-            if (subtype.length == "flush".length && 0 == Memory.cmp(subtype, "flush".data, subtype.length)) {
-                print ("flush\n");
+            if (memEqual (subtype, "flush".data)) {
+                handler = flush;
+            } else if (memEqual (subtype, "grid_line".data)) {
+                handler = grid_line;
             }
         //    else if (subtype == "grid_cursor_goto")
         //    {
         //        _GridCursorGoto(event);
         //    }
-        //    else if (subtype == "grid_line")
-        //    {
-        //        std::cout << "[s";  // save
-        //        _GridLine(event);
-        //        std::cout << "[u";  // restore
-        //    }
         //    else if (subtype == "grid_scroll")
         //    {
-        //        std::cout << "[s";  // save
         //        _GridScroll(event);
-        //        std::cout << "[u";  // restore
         //    }
         //    else if (subtype == "hl_attr_define")
         //    {
@@ -108,8 +111,23 @@ class Renderer : GLib.Object {
         //    }
             else {
                 print ("Ignoring redraw %.*s\n", subtype.length, subtype);
+                continue;
+            }
+
+            if (event.length == 1) {
+                handler (null);
+            } else {
+                for (size_t j = 1; j < event.length; ++j) {
+                    unowned var instance = event[j].array.objects;
+                    handler (instance);
+                }
             }
         }
+    }
+
+    private void flush (MessagePack.Object[]? event) {
+        // TODO: fire a signal
+        print ("flush\n");
     }
 
     //void _GridCursorGoto(const msgpack::object_array &event)
@@ -127,61 +145,60 @@ class Renderer : GLib.Object {
     //    }
     //}
 
-    //void _GridLine(const msgpack::object_array &event)
-    //{
-    //    for (size_t j = 1; j < event.size; ++j)
-    //    {
-    //        const auto &inst = event.ptr[j].via.array;
-    //        int grid = inst.ptr[0].as<int>();
-    //        if (grid != 1)
-    //            throw std::runtime_error("Multigrid not supported");
-    //        int row = inst.ptr[1].as<int>();
-    //        int col = inst.ptr[2].as<int>();
-    //        const auto &cells = inst.ptr[3].via.array;
+    private void grid_line (MessagePack.Object[]? event) {
+        int64 grid = event[0].i64;
+        if (grid != 1) {
+            //throw std::runtime_error("Multigrid not supported");
+            return;
+        }
+        int64 row = event[1].i64;
+        int64 col = event[2].i64;
+        unowned var cells = event[3].array.objects;
 
-    //        unsigned hl_id;
-    //        for (size_t c = 0; c < cells.size; ++c)
-    //        {
-    //            const auto &cell = cells.ptr[c].via.array;
-    //            int repeat = 1;
-    //            std::string text = cell.ptr[0].as<std::string>();
-    //            // if repeat is greater than 1, we are guaranteed to send an hl_id
-    //            // https://github.com/neovim/neovim/blob/master/src/nvim/api/ui.c#L483
-    //            if (cell.size > 1)
-    //                hl_id = cell.ptr[1].as<unsigned>();
-    //            if (cell.size > 2)
-    //                repeat = cell.ptr[2].as<int>();
-    //            std::cout << "[" << (row+1) << ";" << (col+1) << "H";
-    //            std::cout << _attributes[hl_id]();
+        uint64 hl_id = 0;
+        for (size_t c = 0; c < cells.length; ++c) {
+            unowned var cell = cells[c].array.objects;
+            int64 repeat = 1;
 
-    //            int start_col = col;
-    //            _Cell buf_cell{.hl_id = hl_id};
-    //            for (size_t i = 0; i < text.size(); ++i)
-    //            {
-    //                char ch = text[i];
-    //                if (!buf_cell.text.empty() && (static_cast<uint8_t>(ch) & 0xC0) != 0x80)
-    //                {
-    //                    _grid[row * _size.ws_col + col] = buf_cell;
-    //                    buf_cell.text.clear();
-    //                    ++col;
-    //                }
-    //                buf_cell.text.push_back(ch);
-    //            }
-    //            _grid[row * _size.ws_col + col] = buf_cell;
-    //            buf_cell.text.clear();
-    //            ++col;
-    //            std::cout << text;
+            uint8[] text = cell[0].str.str;
+            text += 0;
 
-    //            int stride = col - start_col;
-    //            while (--repeat)
-    //            {
-    //                for (int i = 0; i < stride; ++i, ++col)
-    //                    _grid[row * _size.ws_col + col] = _grid[row * _size.ws_col + col - stride];
-    //                std::cout << text;
-    //            }
-    //        }
-    //    }
-    //}
+            // if repeat is greater than 1, we are guaranteed to send an hl_id
+            // https://github.com/neovim/neovim/blob/master/src/nvim/api/ui.c#L483
+            if (cell.length > 1) {
+                hl_id = cell[1].u64;
+            }
+            if (cell.length > 2) {
+                repeat = cell[2].i64;
+            }
+
+            int64 start_col = col;
+            _Cell buf_cell = {};
+            buf_cell.hl_id = hl_id;
+            uint8[] char_buf = {};
+            for (size_t i = 0; i < text.length; ++i) {
+                uint8 ch = text[i];
+                if (char_buf.length != 0 && (ch & 0xC0) != 0x80) {
+                    char_buf += 0;
+                    buf_cell.text = (string)char_buf;
+                    _grid[row, col] = buf_cell;
+                    char_buf.resize (0);
+                    ++col;
+                }
+                char_buf += ch;
+            }
+            buf_cell.text = (string)char_buf;
+            _grid[row, col] = buf_cell;
+            ++col;
+
+            int64 stride = col - start_col;
+            while (--repeat > 0) {
+                for (int i = 0; i < stride; ++i, ++col) {
+                    _grid[row, col] = _grid[row, col - stride];
+                }
+            }
+        }
+    }
 
     //void _GridScroll(const msgpack::object_array &event)
     //{
