@@ -43,7 +43,7 @@ class Renderer : GLib.Object {
         _rpc.set_on_notification (on_notification);
         _rpc.start ();
 
-        _grid = new Cell[_width, _height];
+        _grid = new Cell[_height, _width];
 
         _rpc.request (
             (packer) => {
@@ -51,8 +51,8 @@ class Renderer : GLib.Object {
                 packer.pack_str (ui_attach.length);
                 packer.pack_str_body (ui_attach);
                 packer.pack_array(3);
-                packer.pack_int (80);
-                packer.pack_int (25);
+                packer.pack_uint32 (_width);
+                packer.pack_uint32 (_height);
                 packer.pack_map (2);
                 unowned uint8[] rgb = "rgb".data;
                 packer.pack_str (rgb.length);
@@ -166,7 +166,6 @@ class Renderer : GLib.Object {
             int64 repeat = 1;
 
             uint8[] text = cell[0].str.str;
-            text += 0;
 
             // if repeat is greater than 1, we are guaranteed to send an hl_id
             // https://github.com/neovim/neovim/blob/master/src/nvim/api/ui.c#L483
@@ -191,6 +190,7 @@ class Renderer : GLib.Object {
                 }
                 char_buf += ch;
             }
+            char_buf += 0;
             buf_cell.text = (string)char_buf;
             _grid[row, col] = buf_cell;
             ++col;
@@ -198,7 +198,12 @@ class Renderer : GLib.Object {
             int64 stride = col - start_col;
             while (--repeat > 0) {
                 for (int i = 0; i < stride; ++i, ++col) {
-                    _grid[row, col] = _grid[row, col - stride];
+                    unowned var src = _grid[row, col - stride];
+                    var dst = Cell() {
+                        hl_id = src.hl_id,
+                        text = src.text.dup()
+                    };
+                    _grid[row, col] = dst;
                 }
             }
         }
