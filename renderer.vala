@@ -100,12 +100,9 @@ class Renderer : GLib.Object {
                 default_colors_set (event[1].array.objects);
             } else if (memEqual (subtype, "hl_attr_define".data)) {
                 handler = hl_attr_define;
-            }
-        //    else if (subtype == "grid_scroll")
-        //    {
-        //        _GridScroll(event);
-        //    }
-            else {
+            } else if (memEqual (subtype, "grid_scroll".data)) {
+                handler = grid_scroll;
+            } else {
                 print ("Ignoring redraw %.*s\n", subtype.length, subtype);
                 continue;
             }
@@ -189,63 +186,42 @@ class Renderer : GLib.Object {
         }
     }
 
-    //void _GridScroll(const msgpack::object_array &event)
-    //{
-    //    for (size_t j = 1; j < event.size; ++j)
-    //    {
-    //        const auto &inst = event.ptr[j].via.array;
-    //        int grid = inst.ptr[0].as<int>();
-    //        if (grid != 1)
-    //            throw std::runtime_error("Multigrid not supported");
-    //        int top = inst.ptr[1].as<int>();
-    //        int bot = inst.ptr[2].as<int>();
-    //        int left = inst.ptr[3].as<int>();
-    //        int right = inst.ptr[4].as<int>();
-    //        int rows = inst.ptr[5].as<int>();
-    //        int cols = inst.ptr[6].as<int>();
-    //        if (cols)
-    //            throw std::runtime_error("Column scrolling not expected");
+    private void grid_scroll (MessagePack.Object[] event) {
+        int64 grid = event[0].i64;
+        if (grid != 1) {
+            //throw std::runtime_error("Multigrid not supported");
+            return;
+        }
+        int top = (int)event[1].i64;
+        int bot = (int)event[2].i64;
+        int left = (int)event[3].i64;
+        int right = (int)event[4].i64;
+        int rows = (int)event[5].i64;
+        int cols = (int)event[6].i64;
+        if (cols != 0) {
+            //throw std::runtime_error("Column scrolling not expected");
+            return;
+        }
 
-    //        int start = 0;
-    //        int stop = 0;
-    //        int step = 0;
-
-    //        --bot;
-    //        if (rows > 0)
-    //        {
-    //            start = top;
-    //            stop = bot - rows + 1;
-    //            step = 1;
-    //        }
-    //        else if (rows < 0)
-    //        {
-    //            start = bot;
-    //            stop = top - rows - 1;
-    //            step = -1;
-    //        }
-    //        else
-    //            throw std::runtime_error("Rows should not equal 0");
-
-    //        // this is very inefficient, but there doesn't appear to be a curses function for extracting whole lines incl.
-    //        // attributes. another alternative would be to keep our own copy of the screen buffer
-    //        for (int r = start; r != stop; r += step)
-    //        {
-    //            std::cout << "[" << (r+1) << ";" << (left+1) << "H";
-    //            size_t idx = r * _size.ws_col + left;
-    //            unsigned hl_id = _grid[idx].hl_id;
-    //            std::cout << _attributes[hl_id]();
-    //            for (int c = left; c < right; ++c, ++idx)
-    //            {
-    //                if (hl_id != _grid[idx].hl_id)
-    //                {
-    //                    hl_id = _grid[idx].hl_id;
-    //                    std::cout << _attributes[hl_id]();
-    //                }
-    //                std::cout << _grid[idx].text;
-    //            }
-    //        }
-    //    }
-    //}
+        if (rows > 0) {
+            for (int row = top; row < bot - rows; ++row) {
+                var rfrom = row + rows;
+                for (int col = left; col < right; ++col) {
+                    _grid[row, col] = _grid[rfrom, col];
+                }
+            }
+        } else if (rows < 0) {
+            for (int row = bot - 1; row > top - rows - 1; --row) {
+                var rfrom = row + rows;
+                for (int col = left; col < right; ++col) {
+                    _grid[row, col] = _grid[rfrom, col];
+                }
+            }
+        } else {
+            //throw std::runtime_error("Rows should not equal 0");
+            return;
+        }
+    }
 
     private uint32 _bg = 0;
     private uint32 _fg = 0xffffff;
