@@ -3,20 +3,6 @@ class Renderer : GLib.Object {
 
     private unowned MsgpackRpc _rpc;
 
-    //private uint32 _fg = 0xffffff;
-    //private uint32 _bg = 0;
-
-    private class _HlAttr {
-        //bool _has_fg = false;
-        //uint32 _fg = 0;
-        //bool _has_bg = false;
-        //uint32 _bg = 0;
-        //bool bold = false;
-        //bool reverse = false;
-    }
-
-    private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
-
     public struct Vector {
         uint32 row;
         uint32 col;
@@ -26,7 +12,7 @@ class Renderer : GLib.Object {
 
     public struct Cell {
         string text;
-        uint64 hl_id;
+        uint32 hl_id;
     }
 
     private Cell[,] _grid;
@@ -88,7 +74,7 @@ class Renderer : GLib.Object {
         return a.length == b.length && 0 == Memory.cmp(a, b, a.length);
     }
 
-    private delegate void HandlerType (MessagePack.Object[]? event);
+    private delegate void HandlerType (MessagePack.Object[] event);
 
     private void on_notification (uint8[] method, MessagePack.Object obj) {
 
@@ -105,32 +91,26 @@ class Renderer : GLib.Object {
             unowned var event = arr[i].array.objects;
             unowned var subtype = event[0].str.str;
             if (memEqual (subtype, "flush".data)) {
-                handler = handle_flush;
+                flush ();
             } else if (memEqual (subtype, "grid_line".data)) {
                 handler = grid_line;
             } else if (memEqual (subtype, "grid_cursor_goto".data)) {
                 handler = grid_cursor_goto;
+            } else if (memEqual (subtype, "default_colors_set".data)) {
+                default_colors_set (event[1].array.objects);
+            } else if (memEqual (subtype, "hl_attr_define".data)) {
+                handler = hl_attr_define;
             }
         //    else if (subtype == "grid_scroll")
         //    {
         //        _GridScroll(event);
-        //    }
-        //    else if (subtype == "hl_attr_define")
-        //    {
-        //        _HlAttrDefine(event);
-        //    }
-        //    else if (subtype == "default_colors_set")
-        //    {
-        //        _HlDefaultColorsSet(event);
         //    }
             else {
                 print ("Ignoring redraw %.*s\n", subtype.length, subtype);
                 continue;
             }
 
-            if (event.length == 1) {
-                handler (null);
-            } else {
+            if (handler != null) {
                 for (size_t j = 1; j < event.length; ++j) {
                     unowned var instance = event[j].array.objects;
                     handler (instance);
@@ -139,11 +119,7 @@ class Renderer : GLib.Object {
         }
     }
 
-    private void handle_flush (MessagePack.Object[]? event) {
-        flush ();
-    }
-
-    private void grid_cursor_goto (MessagePack.Object[]? event) {
+    private void grid_cursor_goto (MessagePack.Object[] event) {
         int64 grid = event[0].i64;
         if (grid != 1) {
             //throw std::runtime_error("Multigrid not supported");
@@ -153,17 +129,17 @@ class Renderer : GLib.Object {
         _cursor.col = (uint32)event[2].u64;
     }
 
-    private void grid_line (MessagePack.Object[]? event) {
+    private void grid_line (MessagePack.Object[] event) {
         int64 grid = event[0].i64;
         if (grid != 1) {
             //throw std::runtime_error("Multigrid not supported");
             return;
         }
-        int64 row = event[1].i64;
-        int64 col = event[2].i64;
+        uint32 row = (uint32)event[1].u64;
+        uint32 col = (uint32)event[2].u64;
         unowned var cells = event[3].array.objects;
 
-        uint64 hl_id = 0;
+        uint32 hl_id = 0;
         for (size_t c = 0; c < cells.length; ++c) {
             unowned var cell = cells[c].array.objects;
             int64 repeat = 1;
@@ -173,13 +149,13 @@ class Renderer : GLib.Object {
             // if repeat is greater than 1, we are guaranteed to send an hl_id
             // https://github.com/neovim/neovim/blob/master/src/nvim/api/ui.c#L483
             if (cell.length > 1) {
-                hl_id = cell[1].u64;
+                hl_id = (uint32)cell[1].u64;
             }
             if (cell.length > 2) {
                 repeat = cell[2].i64;
             }
 
-            int64 start_col = col;
+            uint32 start_col = col;
             Cell buf_cell = Cell() {hl_id = hl_id};
             uint8[] char_buf = {};
             // TODO: use string.to_utf8()
@@ -199,7 +175,7 @@ class Renderer : GLib.Object {
             _grid[row, col] = buf_cell;
             ++col;
 
-            int64 stride = col - start_col;
+            uint32 stride = col - start_col;
             while (--repeat > 0) {
                 for (int i = 0; i < stride; ++i, ++col) {
                     unowned var src = _grid[row, col - stride];
@@ -271,54 +247,62 @@ class Renderer : GLib.Object {
     //    }
     //}
 
-    //void _HlDefaultColorsSet(const msgpack::object_array &event)
-    //{
-    //    const auto &inst = event.ptr[1].via.array;
-    //    _fg = inst.ptr[0].as<unsigned>();
-    //    _bg = inst.ptr[1].as<unsigned>();
-    //}
+    private uint32 _bg = 0;
+    private uint32 _fg = 0xffffff;
 
-    //void _HlAttrDefine(const msgpack::object_array &event)
-    //{
-    //    for (size_t j = 1; j < event.size; ++j)
-    //    {
-    //        const auto &inst = event.ptr[j].via.array;
-    //        unsigned hl_id = inst.ptr[0].as<unsigned>();
-    //        const auto &rgb_attr = inst.ptr[1].via.map;
+    private void default_colors_set (MessagePack.Object[] param) {
+        _fg = (uint32)param[0].u64;
+        _bg = (uint32)param[1].u64;
+        print ("** fg=%x bg=%x\n", _fg, _bg);
+    }
 
-    //        std::optional<unsigned> fg, bg;
-    //        //const auto &cterm_attr = inst.ptr[2].via.map;
-    //        for (size_t i = 0; i < rgb_attr.size; ++i)
-    //        {
-    //            std::string key{rgb_attr.ptr[i].key.as<std::string>()};
-    //            if (key == "foreground")
-    //            {
-    //                fg = rgb_attr.ptr[i].val.as<unsigned>();
-    //            }
-    //            else if (key == "background")
-    //            {
-    //                bg = rgb_attr.ptr[i].val.as<unsigned>();
-    //            }
-    //        }
-    //        bool reverse{false};
-    //        bool bold{false};
-    //        // info = inst[3]
-    //        // nvim api docs state that boolean keys here are only sent if true
-    //        for (size_t i = 0; i < rgb_attr.size; ++i)
-    //        {
-    //            std::string key{rgb_attr.ptr[i].key.as<std::string>()};
-    //            if (key == "reverse")
-    //            {
-    //                reverse = true;
-    //            }
-    //            else if (key == "bold")
-    //            {
-    //                bold = true;
-    //            }
-    //        }
-    //        _AddHlAttr(hl_id, fg, bg, bold, reverse);
-    //    }
-    //}
+    private struct Color {
+        bool is_defined;
+        uint32 rgb;
+
+        public static Color undefined () {
+            return Color() {
+                is_defined = false,
+                rgb = 0
+            };
+        }
+
+        public void set_rgb (uint32 val) {
+            is_defined = true;
+            rgb = val;
+        }
+    }
+
+    private class _HlAttr {
+        public Color fg = Color.undefined ();
+        public Color bg = Color.undefined ();
+        public bool bold = false;
+        public bool reverse = false;
+    }
+
+    private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
+
+    private void hl_attr_define (MessagePack.Object[] event) {
+        uint32 hl_id = (uint32)event[0].u64;
+        unowned var rgb_attr = event[1].map.entries;
+        var attr = new _HlAttr ();
+
+        // nvim api docs state that boolean keys here are only sent if true
+        for (int i = 0; i < rgb_attr.length; ++i) {
+            unowned var key = rgb_attr[i].key.str.str;
+            if (memEqual (key, "foreground".data)) {
+                attr.fg.set_rgb ((uint32)rgb_attr[i].value.u64);
+            } else if (memEqual (key, "background".data)) {
+                attr.bg.set_rgb ((uint32)rgb_attr[i].value.u64);
+            } else if (memEqual (key, "reverse".data)) {
+                attr.reverse = true;
+            } else if (memEqual (key, "bold".data)) {
+                attr.bold = true;
+            }
+        }
+
+        set_hl_attr (hl_id, attr);
+    }
 
     private void set_hl_attr (uint32 hl_id, _HlAttr? attr) {
         if (attr == null) {
@@ -326,5 +310,32 @@ class Renderer : GLib.Object {
         } else {
             _attributes.set (hl_id, attr);
         }
+    }
+
+    public struct HlAttr {
+        uint32 fg;
+        uint32 bg;
+        bool bold;
+        bool reverse;
+    }
+
+    public HlAttr get_hl_attr (uint32 hl_id) {
+        unowned var attr = _attributes.get (hl_id);
+        if (attr != null) {
+            HlAttr ret = HlAttr() {
+                fg = attr.fg.is_defined ? attr.fg.rgb : _fg,
+                bg = attr.bg.is_defined ? attr.bg.rgb : _bg,
+                bold = attr.bold,
+                reverse = attr.reverse
+            };
+            return ret;
+        }
+        HlAttr ret = HlAttr() {
+            fg = _fg,
+            bg = _bg,
+            bold = false,
+            reverse = false
+        };
+        return ret;
     }
 }

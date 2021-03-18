@@ -95,15 +95,34 @@ class Window : Gtk.Window {
         ctx.set_font_size (20);
         ctx.select_font_face ("Monospace", FontSlant.NORMAL, FontWeight.NORMAL);
         Cairo.FontExtents fext;
+
         ctx.font_extents (out fext);
         var w = fext.max_x_advance;
         var h = fext.height;
+        var y0 = fext.descent;
 
         unowned var grid = renderer.get_grid ();
         for (int row = 0; row < grid.length[0]; ++row) {
             for (int col = 0; col < grid.length[1]; ++col) {
-                ctx.move_to (col * w, (row + 1) * h);
-                ctx.show_text (grid[row, col].text);
+                unowned var cell = grid[row, col];
+                var attr = renderer.get_hl_attr (cell.hl_id);
+                ctx.save ();
+                ctx.translate (col * w, row * h);
+                ctx.set_source_rgb (
+                    ((double)(attr.bg >> 16)) / 255,
+                    ((double)((attr.bg >> 8) & 0xff)) / 255,
+                    ((double)(attr.bg & 0xff)) / 255
+                );
+                ctx.rectangle (0, y0, w, h);
+                ctx.fill ();
+                ctx.set_source_rgb (
+                    ((double)(attr.fg >> 16)) / 255,
+                    ((double)((attr.fg >> 8) & 0xff)) / 255,
+                    ((double)(attr.fg & 0xff)) / 255
+                );
+                ctx.move_to (0, h);
+                ctx.show_text (cell.text);
+                ctx.restore ();
             }
         }
 
@@ -113,8 +132,7 @@ class Window : Gtk.Window {
         ctx.set_line_width (w * 0.1);
         ctx.set_tolerance (0.1);
         ctx.set_source_rgba (0, 0, 0, 0.5);
-        ctx.new_path ();
-        ctx.rectangle (cursor.col * w, cursor.row * h + fext.descent, w, h);
+        ctx.rectangle (cursor.col * w, cursor.row * h + y0, w, h);
         ctx.fill ();
         ctx.restore ();
     }
