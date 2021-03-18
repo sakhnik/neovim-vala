@@ -255,6 +255,7 @@ class Renderer : GLib.Object {
         public bool bold = false;
         public bool reverse = false;
         public bool italic = false;
+        public bool underline = false;
     }
 
     private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
@@ -275,6 +276,8 @@ class Renderer : GLib.Object {
                 attr.reverse = true;
             } else if (memEqual (key, "italic".data)) {
                 attr.italic = true;
+            } else if (memEqual (key, "underline".data)) {
+                attr.underline = true;
             } else if (memEqual (key, "bold".data)) {
                 attr.bold = true;
             } else {
@@ -299,6 +302,7 @@ class Renderer : GLib.Object {
         bool bold;
         bool reverse;
         bool italic;
+        bool underline;
     }
 
     public HlAttr get_hl_attr (uint32 hl_id) {
@@ -309,7 +313,8 @@ class Renderer : GLib.Object {
                 bg = attr.bg.is_defined ? attr.bg.rgb : _bg,
                 bold = attr.bold,
                 reverse = attr.reverse,
-                italic = attr.italic
+                italic = attr.italic,
+                underline = attr.underline
             };
             return ret;
         }
@@ -318,7 +323,8 @@ class Renderer : GLib.Object {
             bg = _bg,
             bold = false,
             reverse = false,
-            italic = false
+            italic = false,
+            underline = false
         };
         return ret;
     }

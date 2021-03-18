@@ -125,6 +125,13 @@ class Window : Gtk.Window {
                                       attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
                                       attr.bold ? FontWeight.BOLD : FontWeight.NORMAL);
                 ctx.show_text (cell.text);
+                if (attr.underline) {
+                    ctx.set_line_width (w * 0.1);
+                    ctx.move_to (0, h);
+                    ctx.new_path ();
+                    ctx.line_to (w, h);
+                    ctx.stroke ();
+                }
                 ctx.restore ();
             }
         }
@@ -134,7 +141,7 @@ class Window : Gtk.Window {
         ctx.save ();
         ctx.set_line_width (w * 0.1);
         ctx.set_tolerance (0.1);
-        ctx.set_source_rgba (0, 0, 0, 0.5);
+        ctx.set_source_rgba (1.0, 1.0, 1.0, 0.5);
         ctx.rectangle (cursor.col * w, cursor.row * h + y0, w, h);
         ctx.fill ();
         ctx.restore ();
