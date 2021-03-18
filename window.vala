@@ -44,7 +44,29 @@ class Window : Gtk.Window {
         unichar uc = Gdk.keyval_to_unicode (keyval);
         string input = uc.to_string ();
 
-        // TODO: handle control, alt, functional keys etc
+        string[] modifiers = {};
+        if (0 != (Gdk.ModifierType.CONTROL_MASK & state)) {
+            modifiers += "c-";
+        }
+        if (0 != (Gdk.ModifierType.META_MASK & state) || 0 != (Gdk.ModifierType.ALT_MASK & state)) {
+            modifiers += "m-";
+        }
+        if (0 != (Gdk.ModifierType.SUPER_MASK & state)) {
+            modifiers += "d-";
+        }
+
+        if (modifiers.length > 0) {
+            StringBuilder sb = new StringBuilder ();
+            sb.append_c ('<');
+            foreach (unowned var s in modifiers) {
+                sb.append (s);
+            }
+            sb.append (input);
+            sb.append_c ('>');
+            input = sb.str;
+        }
+
+        // TODO: functional keys, shift etc
 
         rpc.request (
             (packer) => {
@@ -89,13 +111,13 @@ class Window : Gtk.Window {
 
         ctx.set_font_size (20);
         ctx.select_font_face ("Monospace", FontSlant.NORMAL, FontWeight.NORMAL);
-        Cairo.TextExtents extents;
-        ctx.text_extents ("█", out extents);
+        Cairo.FontExtents fext;
+        ctx.font_extents (out fext);
 
         unowned var grid = renderer.get_grid ();
         for (int row = 0; row < grid.length[0]; ++row) {
             for (int col = 0; col < grid.length[1]; ++col) {
-                ctx.move_to (col * extents.width, (row + 1) * extents.height);
+                ctx.move_to (col * fext.max_x_advance, (row + 1) * fext.height);
                 ctx.show_text (grid[row, col].text);
             }
         }

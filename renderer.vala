@@ -131,7 +131,6 @@ class Renderer : GLib.Object {
     }
 
     private void handle_flush (MessagePack.Object[]? event) {
-        print ("*** flush\n");
         flush ();
     }
 
