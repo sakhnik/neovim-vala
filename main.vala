@@ -74,7 +74,7 @@ class NeovimVala : GLib.Object {
 
             renderer.attach_ui ();
 
-            var window = new Window (renderer);
+            var window = new Window (rpc, renderer);
             window.present ();
 
             loop.run ();

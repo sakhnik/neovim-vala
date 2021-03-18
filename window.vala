@@ -6,10 +6,13 @@ using Pango;
 
 class Window : Gtk.Window {
 
-    private Renderer renderer;
+    private unowned MsgpackRpc rpc;
+    private unowned Renderer renderer;
 
-    public Window (Renderer renderer) {
+    public Window (MsgpackRpc rpc, Renderer renderer) {
+        this.rpc = rpc;
         this.renderer = renderer;
+
         renderer.flush.connect (() => {
             child.queue_draw ();
         });
@@ -18,8 +21,47 @@ class Window : Gtk.Window {
         set_default_size (800, 600);
 
         var canvas = new DrawingArea ();
+        canvas.can_focus = true;
+        canvas.focusable = true;
         canvas.set_draw_func (draw_func);
+
+        var controller = new Gtk.EventControllerKey ();
+        controller.propagation_phase = PropagationPhase.CAPTURE;
+        controller.key_pressed.connect (on_key_pressed);
+        canvas.add_controller (controller);
+
         child = canvas;
+    }
+
+    public override bool grab_focus () {
+        return true;
+    }
+
+    private bool on_key_pressed (uint keyval, uint keycode, Gdk.ModifierType state) {
+        string key = Gdk.keyval_name (keyval);
+        print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
+
+        if (key.length != 1) {
+            return false;
+        }
+
+        rpc.request (
+            (packer) => {
+                unowned uint8[] nvim_input = "nvim_input".data;
+                packer.pack_str (nvim_input.length);
+                packer.pack_str_body (nvim_input);
+                packer.pack_array (1);
+                packer.pack_str (key.length);
+                packer.pack_str_body (key.data);
+            },
+            (err, resp) => {
+                if (err.type != MessagePack.Type.NIL) {
+                    printerr ("Input error\n");
+                }
+            }
+        );
+
+        return true;
     }
 
     private void draw_func (DrawingArea drawing_area, Cairo.Context ctx, int width, int height) {
@@ -59,4 +101,5 @@ class Window : Gtk.Window {
 
         ctx.restore ();
     }
+
 }
