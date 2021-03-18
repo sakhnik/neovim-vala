@@ -165,7 +165,7 @@ class Renderer : GLib.Object {
             unowned var cell = cells[c].array.objects;
             int64 repeat = 1;
 
-            uint8[] text = cell[0].str.str;
+            unowned uint8[] text = cell[0].str.str;
 
             // if repeat is greater than 1, we are guaranteed to send an hl_id
             // https://github.com/neovim/neovim/blob/master/src/nvim/api/ui.c#L483
@@ -179,6 +179,7 @@ class Renderer : GLib.Object {
             int64 start_col = col;
             Cell buf_cell = Cell() {hl_id = hl_id};
             uint8[] char_buf = {};
+            // TODO: use string.to_utf8()
             for (size_t i = 0; i < text.length; ++i) {
                 uint8 ch = text[i];
                 if (char_buf.length != 0 && (ch & 0xC0) != 0x80) {

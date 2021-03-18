@@ -38,12 +38,13 @@ class Window : Gtk.Window {
     }
 
     private bool on_key_pressed (uint keyval, uint keycode, Gdk.ModifierType state) {
-        string key = Gdk.keyval_name (keyval);
-        print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
+        //string key = Gdk.keyval_name (keyval);
+        //print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
 
-        if (key.length != 1) {
-            return false;
-        }
+        unichar uc = Gdk.keyval_to_unicode (keyval);
+        string input = uc.to_string ();
+
+        // TODO: handle control, alt, functional keys etc
 
         rpc.request (
             (packer) => {
@@ -51,8 +52,8 @@ class Window : Gtk.Window {
                 packer.pack_str (nvim_input.length);
                 packer.pack_str_body (nvim_input);
                 packer.pack_array (1);
-                packer.pack_str (key.length);
-                packer.pack_str_body (key.data);
+                packer.pack_str (input.length);
+                packer.pack_str_body (input.data);
             },
             (err, resp) => {
                 if (err.type != MessagePack.Type.NIL) {
