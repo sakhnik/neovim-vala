@@ -254,6 +254,7 @@ class Renderer : GLib.Object {
         public Color bg = Color.undefined ();
         public bool bold = false;
         public bool reverse = false;
+        public bool italic = false;
     }
 
     private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
@@ -272,8 +273,12 @@ class Renderer : GLib.Object {
                 attr.bg.set_rgb ((uint32)rgb_attr[i].value.u64);
             } else if (memEqual (key, "reverse".data)) {
                 attr.reverse = true;
+            } else if (memEqual (key, "italic".data)) {
+                attr.italic = true;
             } else if (memEqual (key, "bold".data)) {
                 attr.bold = true;
+            } else {
+                print ("Unknown attribute: %.*s\n", key.length, key);
             }
         }
 
@@ -293,6 +298,7 @@ class Renderer : GLib.Object {
         uint32 bg;
         bool bold;
         bool reverse;
+        bool italic;
     }
 
     public HlAttr get_hl_attr (uint32 hl_id) {
@@ -302,7 +308,8 @@ class Renderer : GLib.Object {
                 fg = attr.fg.is_defined ? attr.fg.rgb : _fg,
                 bg = attr.bg.is_defined ? attr.bg.rgb : _bg,
                 bold = attr.bold,
-                reverse = attr.reverse
+                reverse = attr.reverse,
+                italic = attr.italic
             };
             return ret;
         }
@@ -310,7 +317,8 @@ class Renderer : GLib.Object {
             fg = _fg,
             bg = _bg,
             bold = false,
-            reverse = false
+            reverse = false,
+            italic = false
         };
         return ret;
     }

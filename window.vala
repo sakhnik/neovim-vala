@@ -121,6 +121,9 @@ class Window : Gtk.Window {
                     ((double)(attr.fg & 0xff)) / 255
                 );
                 ctx.move_to (0, h);
+                ctx.select_font_face ("Monospace",
+                                      attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
+                                      attr.bold ? FontWeight.BOLD : FontWeight.NORMAL);
                 ctx.show_text (cell.text);
                 ctx.restore ();
             }
