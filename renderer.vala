@@ -17,8 +17,12 @@ class Renderer : GLib.Object {
 
     private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
 
-    private uint32 _width = 80;
-    private uint32 _height = 25;
+    public struct Vector {
+        uint32 row;
+        uint32 col;
+    }
+
+    private Vector _size;
 
     public struct Cell {
         string text;
@@ -31,10 +35,17 @@ class Renderer : GLib.Object {
         return _grid;
     }
 
+    private Vector _cursor;
+
+    public unowned Vector get_cursor () {
+        return _cursor;
+    }
+
     public signal void flush ();
 
     public Renderer (MsgpackRpc rpc) {
         _rpc = rpc;
+        _size = Vector() { col = 80, row = 25 };
         set_hl_attr (0, new _HlAttr ());
     }
 
@@ -43,7 +54,7 @@ class Renderer : GLib.Object {
         _rpc.set_on_notification (on_notification);
         _rpc.start ();
 
-        _grid = new Cell[_height, _width];
+        _grid = new Cell[_size.row, _size.col];
 
         _rpc.request (
             (packer) => {
@@ -51,8 +62,8 @@ class Renderer : GLib.Object {
                 packer.pack_str (ui_attach.length);
                 packer.pack_str_body (ui_attach);
                 packer.pack_array(3);
-                packer.pack_uint32 (_width);
-                packer.pack_uint32 (_height);
+                packer.pack_uint32 (_size.col);
+                packer.pack_uint32 (_size.row);
                 packer.pack_map (2);
                 unowned uint8[] rgb = "rgb".data;
                 packer.pack_str (rgb.length);
@@ -97,11 +108,9 @@ class Renderer : GLib.Object {
                 handler = handle_flush;
             } else if (memEqual (subtype, "grid_line".data)) {
                 handler = grid_line;
+            } else if (memEqual (subtype, "grid_cursor_goto".data)) {
+                handler = grid_cursor_goto;
             }
-        //    else if (subtype == "grid_cursor_goto")
-        //    {
-        //        _GridCursorGoto(event);
-        //    }
         //    else if (subtype == "grid_scroll")
         //    {
         //        _GridScroll(event);
@@ -134,20 +143,15 @@ class Renderer : GLib.Object {
         flush ();
     }
 
-    //void _GridCursorGoto(const msgpack::object_array &event)
-    //{
-    //    for (size_t j = 1; j < event.size; ++j)
-    //    {
-    //        const auto &inst = event.ptr[j].via.array;
-    //        int grid = inst.ptr[0].as<int>();
-    //        if (grid != 1)
-    //            throw std::runtime_error("Multigrid not supported");
-    //        int row = inst.ptr[1].as<int>();
-    //        int col = inst.ptr[2].as<int>();
-
-    //        std::cout << "[" << (row+1) << ";" << (col+1) << "H";
-    //    }
-    //}
+    private void grid_cursor_goto (MessagePack.Object[]? event) {
+        int64 grid = event[0].i64;
+        if (grid != 1) {
+            //throw std::runtime_error("Multigrid not supported");
+            return;
+        }
+        _cursor.row = (uint32)event[1].u64;
+        _cursor.col = (uint32)event[2].u64;
+    }
 
     private void grid_line (MessagePack.Object[]? event) {
         int64 grid = event[0].i64;

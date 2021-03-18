@@ -14,6 +14,7 @@ class Window : Gtk.Window {
         this.renderer = renderer;
 
         renderer.flush.connect (() => {
+            // TODO: track what parts of canvas need to be redrawn
             child.queue_draw ();
         });
 
@@ -89,39 +90,32 @@ class Window : Gtk.Window {
 
     private void draw_func (DrawingArea drawing_area, Cairo.Context ctx, int width, int height) {
 
-        //const int SIZE = 30;
         ctx.set_source_rgb (0, 0, 0);
-
-        //ctx.set_line_width (SIZE / 4);
-        //ctx.set_tolerance (0.1);
-
-        //ctx.set_line_join (LineJoin.ROUND);
-        //ctx.set_dash (new double[] {SIZE / 4.0, SIZE / 4.0}, 0);
-
-        ctx.save ();
-
-        //ctx.new_path ();
-        //ctx.translate (100 + SIZE, 100 + SIZE);
-        //ctx.move_to (SIZE, 0);
-        //ctx.rel_line_to (SIZE, 2 * SIZE);
-        //ctx.rel_line_to (-2 * SIZE, 0);
-        //ctx.close_path ();
-
-        //ctx.fill ();
 
         ctx.set_font_size (20);
         ctx.select_font_face ("Monospace", FontSlant.NORMAL, FontWeight.NORMAL);
         Cairo.FontExtents fext;
         ctx.font_extents (out fext);
+        var w = fext.max_x_advance;
+        var h = fext.height;
 
         unowned var grid = renderer.get_grid ();
         for (int row = 0; row < grid.length[0]; ++row) {
             for (int col = 0; col < grid.length[1]; ++col) {
-                ctx.move_to (col * fext.max_x_advance, (row + 1) * fext.height);
+                ctx.move_to (col * w, (row + 1) * h);
                 ctx.show_text (grid[row, col].text);
             }
         }
 
+        // Draw primitive block semi-transparent cursor
+        unowned var cursor = renderer.get_cursor ();
+        ctx.save ();
+        ctx.set_line_width (w * 0.1);
+        ctx.set_tolerance (0.1);
+        ctx.set_source_rgba (0, 0, 0, 0.5);
+        ctx.new_path ();
+        ctx.rectangle (cursor.col * w, cursor.row * h + fext.descent, w, h);
+        ctx.fill ();
         ctx.restore ();
     }
 
