@@ -15,3 +15,4 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [ ] Handle errors and failures
 - [ ] Allow selecting GUI font
 - [ ] Consider externalizing popup menus to add scrollbars
+- [ ] Configuration of fonts and behaviour tweaking (consider using lua)
