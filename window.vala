@@ -40,35 +40,39 @@ class Window : Gtk.Window {
     }
 
     private bool on_key_pressed (uint keyval, uint keycode, Gdk.ModifierType state) {
-        //string key = Gdk.keyval_name (keyval);
-        //print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
+        string key = Gdk.keyval_name (keyval);
+        print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
 
         unichar uc = Gdk.keyval_to_unicode (keyval);
         string input = uc.to_string ();
-
-        string[] modifiers = {};
-        if (0 != (Gdk.ModifierType.CONTROL_MASK & state)) {
-            modifiers += "c-";
-        }
-        if (0 != (Gdk.ModifierType.META_MASK & state) || 0 != (Gdk.ModifierType.ALT_MASK & state)) {
-            modifiers += "m-";
-        }
-        if (0 != (Gdk.ModifierType.SUPER_MASK & state)) {
-            modifiers += "d-";
-        }
-
-        if (modifiers.length > 0) {
-            StringBuilder sb = new StringBuilder ();
-            sb.append_c ('<');
-            foreach (unowned var s in modifiers) {
-                sb.append (s);
-            }
-            sb.append (input);
-            sb.append_c ('>');
-            input = sb.str;
-        }
+        int start_length = input.length;
 
         // TODO: functional keys, shift etc
+        switch (keyval) {
+            case Gdk.Key.Escape:
+                input = "esc";
+                break;
+            case Gdk.Key.Return:
+                input = "cr";
+                break;
+            case Gdk.Key.BackSpace:
+                input = "bs";
+                break;
+        }
+
+        if (0 != (Gdk.ModifierType.CONTROL_MASK & state)) {
+            input = "c-" + input;
+        }
+        if (0 != (Gdk.ModifierType.META_MASK & state) || 0 != (Gdk.ModifierType.ALT_MASK & state)) {
+            input = "m-" + input;
+        }
+        if (0 != (Gdk.ModifierType.SUPER_MASK & state)) {
+            input = "d-" + input;
+        }
+
+        if (input.length != start_length) {
+            input = "<" + input + ">";
+        }
 
         rpc.request (
             (packer) => {
