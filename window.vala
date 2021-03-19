@@ -40,8 +40,8 @@ class Window : Gtk.Window {
     }
 
     private bool on_key_pressed (uint keyval, uint keycode, Gdk.ModifierType state) {
-        string key = Gdk.keyval_name (keyval);
-        print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
+        //string key = Gdk.keyval_name (keyval);
+        //print ("* key pressed %u (%s) %u\n", keyval, key, keycode);
 
         unichar uc = Gdk.keyval_to_unicode (keyval);
         string input = uc.to_string ();
