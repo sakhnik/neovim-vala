@@ -230,7 +230,6 @@ class Renderer : GLib.Object {
     private void default_colors_set (MessagePack.Object[] param) {
         _fg = (uint32)param[0].u64;
         _bg = (uint32)param[1].u64;
-        print ("** fg=%x bg=%x\n", _fg, _bg);
     }
 
     private struct Color {
@@ -257,6 +256,7 @@ class Renderer : GLib.Object {
         public bool reverse = false;
         public bool italic = false;
         public bool underline = false;
+        public bool undercurl = false;
     }
 
     private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
@@ -279,6 +279,8 @@ class Renderer : GLib.Object {
                 attr.italic = true;
             } else if (memEqual (key, "underline".data)) {
                 attr.underline = true;
+            } else if (memEqual (key, "undercurl".data)) {
+                attr.undercurl = true;
             } else if (memEqual (key, "bold".data)) {
                 attr.bold = true;
             } else {
@@ -304,6 +306,7 @@ class Renderer : GLib.Object {
         bool reverse;
         bool italic;
         bool underline;
+        bool undercurl;
     }
 
     public HlAttr get_hl_attr (uint32 hl_id) {
@@ -315,7 +318,8 @@ class Renderer : GLib.Object {
                 bold = attr.bold,
                 reverse = attr.reverse,
                 italic = attr.italic,
-                underline = attr.underline
+                underline = attr.underline,
+                undercurl = attr.undercurl
             };
             return ret;
         }
@@ -325,7 +329,8 @@ class Renderer : GLib.Object {
             bold = false,
             reverse = false,
             italic = false,
-            underline = false
+            underline = false,
+            undercurl = false
         };
         return ret;
     }

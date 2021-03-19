@@ -131,6 +131,17 @@ class Window : Gtk.Window {
                     ctx.line_to (w, h * 1.1);
                     ctx.stroke ();
                 }
+
+                if (attr.undercurl) {
+                    ctx.save ();
+                    ctx.set_source_rgba (1, 0, 0, 0.5);
+                    ctx.set_line_width (w * 0.1);
+                    ctx.move_to (0, h * 1.1);
+                    ctx.curve_to (0.2 * w, h, 0.3 * w, h, 0.5 * w, h * 1.1);
+                    ctx.curve_to (0.7 * w, h * 1.2, 0.8 * w, h * 1.2, 1.0 * w, h * 1.1);
+                    ctx.stroke ();
+                    ctx.restore ();
+                }
                 ctx.restore ();
             }
         }
