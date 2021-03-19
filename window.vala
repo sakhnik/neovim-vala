@@ -108,11 +108,19 @@ class Window : Gtk.Window {
     private CellInfo calculate_cell_info (Cairo.Context ctx) {
         ctx.set_font_size (20);
         ctx.select_font_face (font_face, FontSlant.NORMAL, FontWeight.NORMAL);
-        Cairo.FontExtents fext;
 
+        Cairo.TextExtents text;
+        string ruler = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        ctx.text_extents (ruler, out text);
+
+        Cairo.FontExtents fext;
         ctx.font_extents (out fext);
+
         CellInfo cell_info = new CellInfo ();
-        cell_info.w = fext.max_x_advance;
+        cell_info.w = text.x_advance / ruler.length;
+        if (cell_info.w > fext.max_x_advance) {
+            cell_info.w = fext.max_x_advance;
+        }
         cell_info.h = fext.height;
         cell_info.y0 = fext.descent;
         return cell_info;
