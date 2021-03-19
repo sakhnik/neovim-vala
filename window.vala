@@ -31,6 +31,7 @@ class Window : Gtk.Window {
         controller.key_pressed.connect (on_key_pressed);
         canvas.add_controller (controller);
 
+        canvas.resize.connect (on_resize);
         child = canvas;
     }
 
@@ -88,6 +89,29 @@ class Window : Gtk.Window {
         return true;
     }
 
+    private string font_face = "Monospace";
+
+    [Compact]
+    private class CellInfo {
+        public double w;
+        public double h;
+        public double y0;
+    }
+    private CellInfo? cell_info;
+
+    private CellInfo calculate_cell_info (Cairo.Context ctx) {
+        ctx.set_font_size (20);
+        ctx.select_font_face (font_face, FontSlant.NORMAL, FontWeight.NORMAL);
+        Cairo.FontExtents fext;
+
+        ctx.font_extents (out fext);
+        CellInfo cell_info = new CellInfo ();
+        cell_info.w = fext.max_x_advance;
+        cell_info.h = fext.height;
+        cell_info.y0 = fext.descent;
+        return cell_info;
+    }
+
     private static void set_source_rgb (Cairo.Context ctx, uint32 rgb) {
         ctx.set_source_rgb (
             ((double)(rgb >> 16)) / 255,
@@ -98,16 +122,17 @@ class Window : Gtk.Window {
 
     private void draw_func (DrawingArea drawing_area, Cairo.Context ctx, int width, int height) {
 
+        if (cell_info == null) {
+            cell_info = calculate_cell_info (ctx);
+        }
+
         ctx.set_source_rgb (0, 0, 0);
-
         ctx.set_font_size (20);
-        ctx.select_font_face ("Monospace", FontSlant.NORMAL, FontWeight.NORMAL);
-        Cairo.FontExtents fext;
+        ctx.select_font_face (font_face, FontSlant.NORMAL, FontWeight.NORMAL);
 
-        ctx.font_extents (out fext);
-        var w = fext.max_x_advance;
-        var h = fext.height;
-        var y0 = fext.descent;
+        var w = cell_info.w;
+        var h = cell_info.h;
+        var y0 = cell_info.y0;
 
         unowned var grid = renderer.get_grid ();
         for (int row = 0; row < grid.length[0]; ++row) {
@@ -121,7 +146,7 @@ class Window : Gtk.Window {
                 ctx.fill ();
                 set_source_rgb (ctx, attr.fg.get_rgb ());
                 ctx.move_to (0, h);
-                ctx.select_font_face ("Monospace",
+                ctx.select_font_face (font_face,
                                       attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
                                       attr.bold ? FontWeight.BOLD : FontWeight.NORMAL);
                 ctx.show_text (cell.text);
@@ -155,6 +180,43 @@ class Window : Gtk.Window {
         ctx.rectangle (cursor.col * w, cursor.row * h + y0, w, h);
         ctx.fill ();
         ctx.restore ();
+    }
+
+    private void on_resize (int width, int height) {
+        if (cell_info == null) {
+            // Cell info is calculated when drawing. If haven't happened yet,
+            // wait for another cycle.
+            print ("resize to %dx%d -> no cell info yet\n", width, height);
+            return;
+        }
+
+        int rows = (int)(height / cell_info.h);
+        int cols = (int)(width / cell_info.w);
+
+        unowned var grid = renderer.get_grid ();
+        if (rows == grid.length[0] && cols == grid.length[1]) {
+            // No need to resize yet.
+            return;
+        }
+
+        print ("resize to %dx%d -> %dx%d\n", width, height, rows, cols);
+        rpc.request (
+            (packer) => {
+                unowned uint8[] ui_resize = "nvim_ui_try_resize".data;
+                packer.pack_str (ui_resize.length);
+                packer.pack_str_body (ui_resize);
+                packer.pack_array(2);
+                packer.pack_uint32 (cols);
+                packer.pack_uint32 (rows);
+            },
+            (err, resp) => {
+                if (err.type != MessagePack.Type.NIL) {
+                    printerr ("Failed to resize UI ");
+                    //err.print (stderr);
+                    printerr ("\n");
+                    //throw new SpawnError.FAILED ("");
+                }
+            });
     }
 
 }

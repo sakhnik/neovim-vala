@@ -91,6 +91,8 @@ class Renderer : GLib.Object {
             unowned var subtype = event[0].str.str;
             if (memEqual (subtype, "flush".data)) {
                 flush ();
+            } else if (memEqual (subtype, "grid_resize".data)) {
+                handler = grid_resize;
             } else if (memEqual (subtype, "grid_line".data)) {
                 handler = grid_line;
             } else if (memEqual (subtype, "grid_cursor_goto".data)) {
@@ -115,6 +117,17 @@ class Renderer : GLib.Object {
                 }
             }
         }
+    }
+
+    private void grid_resize (MessagePack.Object[] event) {
+        int64 grid = event[0].i64;
+        if (grid != 1) {
+            //throw std::runtime_error("Multigrid not supported");
+            return;
+        }
+        int width = (int)event[1].i64;
+        int height = (int)event[2].i64;
+        _grid = new Cell[height, width];
     }
 
     private void grid_cursor_goto (MessagePack.Object[] event) {
