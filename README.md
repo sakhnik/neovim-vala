@@ -7,10 +7,11 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 ## TODO
 
 - [x] Calculate width, height from the window size and chosen font
-- [ ] Handle special keys like arrows, functional keys
 - [ ] Test MinGW build
 - [ ] Setup GitHub actions to build for Win32, appimage for Linux
 - [ ] Automatic testing
+- [ ] Cursor shapes
+- [ ] Handle special keys like arrows, functional keys
 - [ ] Handle the rest of highlight attributes
 - [ ] Handle errors and failures
 - [ ] Allow selecting GUI font
