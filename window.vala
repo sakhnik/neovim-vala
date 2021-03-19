@@ -89,7 +89,13 @@ class Window : Gtk.Window {
         return true;
     }
 
-    private string font_face = "Monospace";
+    private string font_face =
+#if OS_windows
+        "Courier New"
+#else
+        "Monospace"
+#endif
+        ;
 
     [Compact]
     private class CellInfo {

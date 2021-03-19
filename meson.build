@@ -3,6 +3,7 @@ project('vala app', 'vala', 'c')
 vapi_dir = meson.current_source_dir() / 'vapi'
 
 add_project_arguments(['--vapidir', vapi_dir], language: 'vala')
+add_project_arguments(['-D', 'OS_' + host_machine.system()], language: 'vala')
 
 dependencies = [
     dependency('glib-2.0'),
