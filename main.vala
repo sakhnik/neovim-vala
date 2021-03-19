@@ -1,29 +1,9 @@
 
 class NeovimVala : GLib.Object {
 
-    private static bool process_line (IOChannel channel, IOCondition condition, string stream_name) {
-        if (condition == IOCondition.HUP) {
-            print ("%s: The fd has been closed.\n", stream_name);
-            return false;
-        }
-
-        try {
-            string line;
-            channel.read_line (out line, null, null);
-            print ("%s: %s", stream_name, line);
-        } catch (IOChannelError e) {
-            print ("%s: IOChannelError: %s\n", stream_name, e.message);
-            return false;
-        } catch (ConvertError e) {
-            print ("%s: ConvertError: %s\n", stream_name, e.message);
-            return false;
-        }
-
-        return true;
-    }
-
     public static int main(string[] args) {
 
+        // Handle Unicode properly
         Intl.setlocale(LocaleCategory.CTYPE, "");
 
         Gtk.init ();
@@ -31,33 +11,28 @@ class NeovimVala : GLib.Object {
         MainLoop loop = new MainLoop ();
         try {
             string[] spawn_args = {"nvim", "--embed"};
-            string[] spawn_env = Environ.get ();
+            for (int i = 1; i < args.length; ++i) {
+                spawn_args += args[i];
+            }
             Pid child_pid;
 
             int standard_input;
             int standard_output;
-            int standard_error;
 
-            Process.spawn_async_with_pipes ("/",
+            Process.spawn_async_with_pipes (null /*cwd*/,
                                             spawn_args,
-                                            spawn_env,
+                                            null /*spawn_env*/,
                                             SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD,
                                             null,
                                             out child_pid,
                                             out standard_input,
                                             out standard_output,
-                                            out standard_error);
+                                            null);
 
             // stdout:
             IOChannel output = new IOChannel.unix_new (standard_output);
-            output.set_encoding (null);
+            output.set_encoding (null);  // handle as binary
             output.set_buffered (false);
-
-            // stderr:
-            IOChannel error = new IOChannel.unix_new (standard_error);
-            error.add_watch (IOCondition.IN | IOCondition.HUP, (channel, condition) => {
-                return process_line (channel, condition, "stderr");
-            });
 
             IOChannel input = new IOChannel.unix_new (standard_input);
             input.set_encoding (null);
