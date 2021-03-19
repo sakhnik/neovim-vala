@@ -127,9 +127,8 @@ class Window : Gtk.Window {
                 ctx.show_text (cell.text);
                 if (attr.underline) {
                     ctx.set_line_width (w * 0.1);
-                    ctx.move_to (0, h);
-                    ctx.new_path ();
-                    ctx.line_to (w, h);
+                    ctx.move_to (0, h * 1.1);
+                    ctx.line_to (w, h * 1.1);
                     ctx.stroke ();
                 }
                 ctx.restore ();

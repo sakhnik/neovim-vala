@@ -35,8 +35,7 @@ class Renderer : GLib.Object {
         set_hl_attr (0, new _HlAttr ());
     }
 
-    public void attach_ui ()
-    {
+    public void attach_ui () {
         _rpc.set_on_notification (on_notification);
         _rpc.start ();
 
@@ -102,6 +101,8 @@ class Renderer : GLib.Object {
                 handler = hl_attr_define;
             } else if (memEqual (subtype, "grid_scroll".data)) {
                 handler = grid_scroll;
+            } else if (memEqual (subtype, "win_viewport".data)) {
+                // just info to display, can skip
             } else {
                 print ("Ignoring redraw %.*s\n", subtype.length, subtype);
                 continue;
