@@ -157,12 +157,20 @@ class Window : Gtk.Window {
             for (int col = 0; col < grid.length[1]; ++col) {
                 unowned var cell = grid[row, col];
                 unowned var attr = renderer.get_hl_attr (cell.hl_id);
+                var fg = attr.fg.get_rgb ();
+                var bg = attr.bg.get_rgb ();
+                if (attr.reverse) {
+                    var t = fg;
+                    fg = bg;
+                    bg = t;
+                }
+
                 ctx.save ();
                 ctx.translate (col * w, row * h);
-                set_source_rgb (ctx, attr.bg.get_rgb ());
+                set_source_rgb (ctx, bg);
                 ctx.rectangle (0, y0, w, h);
                 ctx.fill ();
-                set_source_rgb (ctx, attr.fg.get_rgb ());
+                set_source_rgb (ctx, fg);
                 ctx.move_to (0, h);
                 ctx.select_font_face (font_face,
                                       attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
