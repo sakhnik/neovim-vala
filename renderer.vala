@@ -32,7 +32,7 @@ class Renderer : GLib.Object {
     public Renderer (MsgpackRpc rpc) {
         _rpc = rpc;
         _size = Vector() { col = 80, row = 25 };
-        set_hl_attr (0, new _HlAttr ());
+        _attributes.set (0, new HlAttr (&_fg, &_bg));
     }
 
     public void attach_ui () {
@@ -232,14 +232,16 @@ class Renderer : GLib.Object {
         _bg = (uint32)param[1].u64;
     }
 
-    private struct Color {
+    public struct Color {
         bool is_defined;
         uint32 rgb;
+        uint32* def_rgb;
 
-        public static Color undefined () {
+        public static Color undefined (uint32* def) {
             return Color() {
                 is_defined = false,
-                rgb = 0
+                rgb = 0,
+                def_rgb = def
             };
         }
 
@@ -247,24 +249,33 @@ class Renderer : GLib.Object {
             is_defined = true;
             rgb = val;
         }
+
+        public uint32 get_rgb () {
+            return is_defined ? rgb : *def_rgb;
+        }
     }
 
-    private class _HlAttr {
-        public Color fg = Color.undefined ();
-        public Color bg = Color.undefined ();
+    public class HlAttr {
+        public Color fg;
+        public Color bg;
         public bool bold = false;
         public bool reverse = false;
         public bool italic = false;
         public bool underline = false;
         public bool undercurl = false;
+
+        public HlAttr (uint32* def_fg, uint32* def_bg) {
+            fg = Color.undefined (def_fg);
+            bg = Color.undefined (def_bg);
+        }
     }
 
-    private HashTable<uint32, _HlAttr?> _attributes = new HashTable<uint32, _HlAttr?> (direct_hash, direct_equal);
+    private HashTable<uint32, HlAttr?> _attributes = new HashTable<uint32, HlAttr?> (direct_hash, direct_equal);
 
     private void hl_attr_define (MessagePack.Object[] event) {
         uint32 hl_id = (uint32)event[0].u64;
         unowned var rgb_attr = event[1].map.entries;
-        var attr = new _HlAttr ();
+        var attr = new HlAttr (&_fg, &_bg);
 
         // nvim api docs state that boolean keys here are only sent if true
         for (int i = 0; i < rgb_attr.length; ++i) {
@@ -288,50 +299,11 @@ class Renderer : GLib.Object {
             }
         }
 
-        set_hl_attr (hl_id, attr);
+        _attributes.set (hl_id, attr);
     }
 
-    private void set_hl_attr (uint32 hl_id, _HlAttr? attr) {
-        if (attr == null) {
-            _attributes.remove (hl_id);
-        } else {
-            _attributes.set (hl_id, attr);
-        }
-    }
-
-    public struct HlAttr {
-        uint32 fg;
-        uint32 bg;
-        bool bold;
-        bool reverse;
-        bool italic;
-        bool underline;
-        bool undercurl;
-    }
-
-    public HlAttr get_hl_attr (uint32 hl_id) {
-        unowned var attr = _attributes.get (hl_id);
-        if (attr != null) {
-            HlAttr ret = HlAttr() {
-                fg = attr.fg.is_defined ? attr.fg.rgb : _fg,
-                bg = attr.bg.is_defined ? attr.bg.rgb : _bg,
-                bold = attr.bold,
-                reverse = attr.reverse,
-                italic = attr.italic,
-                underline = attr.underline,
-                undercurl = attr.undercurl
-            };
-            return ret;
-        }
-        HlAttr ret = HlAttr() {
-            fg = _fg,
-            bg = _bg,
-            bold = false,
-            reverse = false,
-            italic = false,
-            underline = false,
-            undercurl = false
-        };
-        return ret;
+    // TODO consider immutability of the reference (const in C++)?
+    public unowned HlAttr get_hl_attr (uint32 hl_id) {
+        return _attributes.get (hl_id);
     }
 }

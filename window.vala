@@ -88,6 +88,14 @@ class Window : Gtk.Window {
         return true;
     }
 
+    private static void set_source_rgb (Cairo.Context ctx, uint32 rgb) {
+        ctx.set_source_rgb (
+            ((double)(rgb >> 16)) / 255,
+            ((double)((rgb >> 8) & 0xff)) / 255,
+            ((double)(rgb & 0xff)) / 255
+            );
+    }
+
     private void draw_func (DrawingArea drawing_area, Cairo.Context ctx, int width, int height) {
 
         ctx.set_source_rgb (0, 0, 0);
@@ -105,21 +113,13 @@ class Window : Gtk.Window {
         for (int row = 0; row < grid.length[0]; ++row) {
             for (int col = 0; col < grid.length[1]; ++col) {
                 unowned var cell = grid[row, col];
-                var attr = renderer.get_hl_attr (cell.hl_id);
+                unowned var attr = renderer.get_hl_attr (cell.hl_id);
                 ctx.save ();
                 ctx.translate (col * w, row * h);
-                ctx.set_source_rgb (
-                    ((double)(attr.bg >> 16)) / 255,
-                    ((double)((attr.bg >> 8) & 0xff)) / 255,
-                    ((double)(attr.bg & 0xff)) / 255
-                );
+                set_source_rgb (ctx, attr.bg.get_rgb ());
                 ctx.rectangle (0, y0, w, h);
                 ctx.fill ();
-                ctx.set_source_rgb (
-                    ((double)(attr.fg >> 16)) / 255,
-                    ((double)((attr.fg >> 8) & 0xff)) / 255,
-                    ((double)(attr.fg & 0xff)) / 255
-                );
+                set_source_rgb (ctx, attr.fg.get_rgb ());
                 ctx.move_to (0, h);
                 ctx.select_font_face ("Monospace",
                                       attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
