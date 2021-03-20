@@ -4,9 +4,14 @@ using Cairo;
 
 class Grid {
 
-    public int rows {get; private set; default = 0;}
-    public int cols {get; private set; default = 0;}
+    private unowned Renderer renderer;
 
+    public Grid (Renderer renderer) {
+        this.renderer = renderer;
+    }
+
+    private int rows = 0;
+    private int cols = 0;
     public Cairo.Surface surface;
 
     private string font_face =
@@ -54,7 +59,7 @@ class Grid {
             );
     }
 
-    public void draw (Renderer renderer) {
+    public void draw () {
 
         Cairo.Context ctx = new Cairo.Context (surface);
 
@@ -122,7 +127,7 @@ class Grid {
         ctx.restore ();
     }
 
-    public bool resize (int width, int height, Gdk.Surface orig_surface) {
+    public void resize (int width, int height, Gdk.Surface orig_surface) {
         surface = orig_surface.create_similar_surface (Cairo.Content.COLOR_ALPHA, width, height);
         Cairo.Context ctx = new Cairo.Context (surface);
         cell_info = calculate_cell_info (ctx);
@@ -131,11 +136,11 @@ class Grid {
         int new_cols = (int)(width / cell_info.w);
 
         if (new_rows == rows && new_cols == cols) {
-            return false;
+            return;
         }
 
         rows = new_rows;
         cols = new_cols;
-        return true;
+        renderer.try_resize (rows, cols);
     }
 }

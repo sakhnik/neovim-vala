@@ -14,11 +14,11 @@ class Window : Gtk.Window {
     public Window (MsgpackRpc rpc, Renderer renderer) {
         this.rpc = rpc;
         this.renderer = renderer;
-        this.grid = new Grid ();
+        this.grid = new Grid (renderer);
 
         renderer.flush.connect (() => {
             // TODO: track what parts of canvas need to be redrawn
-            child.queue_draw ();
+            canvas.queue_draw ();
         });
 
         this.title = "Nvim Vala";
@@ -27,6 +27,7 @@ class Window : Gtk.Window {
         canvas = new DrawingArea ();
         canvas.can_focus = true;
         canvas.focusable = true;
+        canvas.resize.connect (on_resize);
         canvas.set_draw_func (draw_func);
 
         var controller = new Gtk.EventControllerKey ();
@@ -34,7 +35,6 @@ class Window : Gtk.Window {
         controller.key_pressed.connect (on_key_pressed);
         canvas.add_controller (controller);
 
-        canvas.resize.connect (on_resize);
         child = canvas;
     }
 
@@ -97,18 +97,13 @@ class Window : Gtk.Window {
     }
 
     private void draw_func (DrawingArea drawing_area, Cairo.Context ctx, int width, int height) {
-        grid.draw (renderer);
+        grid.draw ();
         ctx.set_source_surface (grid.surface, 0, 0);
         ctx.paint ();
     }
 
     private void on_resize (int width, int height) {
-
-        if (!grid.resize (width, height, this.get_surface ())) {
-            return;
-        }
-
-        renderer.try_resize (grid.rows, grid.cols);
+        grid.resize (width, height, this.get_surface ());
     }
 
 }
