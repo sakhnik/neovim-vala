@@ -4,6 +4,11 @@ using Cairo;
 
 class Grid {
 
+    public int rows {get; private set; default = 0;}
+    public int cols {get; private set; default = 0;}
+
+    public Cairo.Surface surface;
+
     private string font_face =
 #if OS_windows
         "Courier New"
@@ -49,13 +54,9 @@ class Grid {
             );
     }
 
-    public void draw (Renderer renderer, Cairo.Context ctx) {
+    public void draw (Renderer renderer) {
 
-        // TODO: use cairo_copy_clip_rectangle_list() to redraw only dirty parts.
-
-        if (cell_info == null) {
-            cell_info = calculate_cell_info (ctx);
-        }
+        Cairo.Context ctx = new Cairo.Context (surface);
 
         ctx.set_source_rgb (0, 0, 0);
         ctx.set_font_size (20);
@@ -121,18 +122,20 @@ class Grid {
         ctx.restore ();
     }
 
-    public bool calc_size (int width, int height, out int rows, out int cols) {
-        if (cell_info == null) {
-            // Cell info is calculated when drawing. If haven't happened yet,
-            // wait for another cycle.
-            print ("resize to %dx%d -> no cell info yet\n", width, height);
-            rows = 0;
-            cols = 0;
+    public bool resize (int width, int height, Gdk.Surface orig_surface) {
+        surface = orig_surface.create_similar_surface (Cairo.Content.COLOR_ALPHA, width, height);
+        Cairo.Context ctx = new Cairo.Context (surface);
+        cell_info = calculate_cell_info (ctx);
+
+        int new_rows = (int)(height / cell_info.h);
+        int new_cols = (int)(width / cell_info.w);
+
+        if (new_rows == rows && new_cols == cols) {
             return false;
         }
 
-        rows = (int)(height / cell_info.h);
-        cols = (int)(width / cell_info.w);
+        rows = new_rows;
+        cols = new_cols;
         return true;
     }
 }

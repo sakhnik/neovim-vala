@@ -319,4 +319,24 @@ class Renderer : GLib.Object {
     public unowned HlAttr get_hl_attr (uint32 hl_id) {
         return _attributes.get (hl_id);
     }
+
+    public void try_resize (int rows, int cols) {
+        _rpc.request (
+            (packer) => {
+                unowned uint8[] ui_resize = "nvim_ui_try_resize".data;
+                packer.pack_str (ui_resize.length);
+                packer.pack_str_body (ui_resize);
+                packer.pack_array(2);
+                packer.pack_uint32 (cols);
+                packer.pack_uint32 (rows);
+            },
+            (err, resp) => {
+                if (err.type != MessagePack.Type.NIL) {
+                    printerr ("Failed to resize UI ");
+                    //err.print (stderr);
+                    printerr ("\n");
+                    //throw new SpawnError.FAILED ("");
+                }
+            });
+    }
 }
