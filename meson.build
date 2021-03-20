@@ -15,6 +15,11 @@ dependencies = [
     dependency('msgpack'),
 ]
 
-sources = files('main.vala', 'msgpack-rpc.vala', 'renderer.vala', 'window.vala')
+sources = files(
+    'main.vala',
+    'msgpack-rpc.vala',
+    'renderer.vala',
+    'grid.vala',
+    'window.vala')
 
 executable('nvv', sources, dependencies: dependencies)
