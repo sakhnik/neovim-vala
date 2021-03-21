@@ -136,16 +136,16 @@ class Grid {
         var old_surface = surface;
         surface = orig_surface.create_similar_surface (Cairo.Content.COLOR_ALPHA, width, height);
         Cairo.Context ctx = new Cairo.Context (surface);
-        cell_info = calculate_cell_info (ctx);
+        if (old_surface != null) {
+            ctx.set_source_surface (old_surface, 0, 0);
+            ctx.paint ();
+        }
 
+        cell_info = calculate_cell_info (ctx);
         int new_rows = (int)(height / cell_info.h);
         int new_cols = (int)(width / cell_info.w);
 
         if (new_rows == rows && new_cols == cols) {
-            if (old_surface != null) {
-                ctx.set_source_surface (old_surface, 0, 0);
-                ctx.paint ();
-            }
             return;
         }
 
