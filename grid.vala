@@ -133,6 +133,7 @@ class Grid {
     }
 
     public void resize (int width, int height, Gdk.Surface orig_surface) {
+        var old_surface = surface;
         surface = orig_surface.create_similar_surface (Cairo.Content.COLOR_ALPHA, width, height);
         Cairo.Context ctx = new Cairo.Context (surface);
         cell_info = calculate_cell_info (ctx);
@@ -141,6 +142,10 @@ class Grid {
         int new_cols = (int)(width / cell_info.w);
 
         if (new_rows == rows && new_cols == cols) {
+            if (old_surface != null) {
+                ctx.set_source_surface (old_surface, 0, 0);
+                ctx.paint ();
+            }
             return;
         }
 

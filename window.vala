@@ -17,7 +17,6 @@ class Window : Gtk.Window {
         this.grid = new Grid (renderer);
 
         renderer.flush.connect (() => {
-            // TODO: track what parts of canvas need to be redrawn
             canvas.queue_draw ();
         });
 

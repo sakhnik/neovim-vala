@@ -14,6 +14,7 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [ ] Automatic testing
 - [ ] Cursor shapes
 - [ ] Make redrawing atomic with flush
+- [ ] Fix white flashing when resizing
 - [ ] Handle special keys like arrows, functional keys
 - [ ] Handle the rest of highlight attributes
 - [ ] Handle errors and failures
