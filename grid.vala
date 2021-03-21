@@ -16,6 +16,9 @@ class Grid {
     private int rows = 0;
     private int cols = 0;
     public Cairo.Surface surface;
+    // Defer initial surface painting until the moment when the actual
+    // background color is known.
+    private bool surface_primed = false;
 
     private string font_face =
 #if OS_windows
@@ -65,6 +68,16 @@ class Grid {
     private void draw (int top, int bot, int left, int right) {
 
         Cairo.Context ctx = new Cairo.Context (surface);
+
+        if (!surface_primed) {
+            // We know the background color by now, it's time to paint
+            // the whole surface to clean any parts that aren't going to be
+            // actively repainted (beyond cells).
+            set_source_rgb (ctx, renderer.bg);
+            ctx.rectangle (0, 0, cell_info.w * (cols + 1), cell_info.h * (rows + 1));
+            ctx.fill ();
+            surface_primed = true;
+        }
 
         ctx.set_font_size (20);
         ctx.select_font_face (font_face, FontSlant.NORMAL, FontWeight.NORMAL);
@@ -190,18 +203,20 @@ class Grid {
         int new_rows = (int)(height / cell_info.h);
         int new_cols = (int)(width / cell_info.w);
 
-        // Make sure to paint the edges beyond the cells with the actual background color.
-        set_source_rgb (ctx, renderer.bg);
-        double w = cell_info.w;
-        double h = cell_info.h;
+        if (surface_primed) {
+            // Make sure to paint the edges beyond the cells with the actual background color.
+            set_source_rgb (ctx, renderer.bg);
+            double w = cell_info.w;
+            double h = cell_info.h;
 
-        double x = w * int.min(new_cols, cols);
-        double y = h * int.min(new_rows, rows);
+            double x = w * int.min(new_cols, cols);
+            double y = h * int.min(new_rows, rows);
 
-        ctx.rectangle (0, y, width, height - y);
-        ctx.fill ();
-        ctx.rectangle (x, 0, width - x, height);
-        ctx.fill ();
+            ctx.rectangle (0, y, width, height - y);
+            ctx.fill ();
+            ctx.rectangle (x, 0, width - x, height);
+            ctx.fill ();
+        }
 
         if (new_rows == rows && new_cols == cols) {
             return;
