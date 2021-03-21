@@ -4,15 +4,15 @@ class Renderer : GLib.Object {
     private unowned MsgpackRpc _rpc;
 
     public struct Vector {
-        uint32 row;
-        uint32 col;
+        int row;
+        int col;
     }
 
     private Vector _size;
 
     public struct Cell {
         string text;
-        uint32 hl_id;
+        uint hl_id;
     }
 
     private Cell[,] _grid;
@@ -47,8 +47,8 @@ class Renderer : GLib.Object {
                 packer.pack_str (ui_attach.length);
                 packer.pack_str_body (ui_attach);
                 packer.pack_array(3);
-                packer.pack_uint32 (_size.col);
-                packer.pack_uint32 (_size.row);
+                packer.pack_int (_size.col);
+                packer.pack_int (_size.row);
                 packer.pack_map (2);
                 unowned uint8[] rgb = "rgb".data;
                 packer.pack_str (rgb.length);
@@ -130,14 +130,21 @@ class Renderer : GLib.Object {
         _grid = new Cell[height, width];
     }
 
+    public signal void changed (int top, int bot, int left, int right);
+
     private void grid_cursor_goto (MessagePack.Object[] event) {
         int64 grid = event[0].i64;
         if (grid != 1) {
             //throw std::runtime_error("Multigrid not supported");
             return;
         }
-        _cursor.row = (uint32)event[1].u64;
-        _cursor.col = (uint32)event[2].u64;
+        var cursor0 = _cursor;
+        _cursor.row = (int)event[1].i64;
+        _cursor.col = (int)event[2].i64;
+        // TODO reconsider whether the cursor should be part of the grid.
+        // Maybe it's worth drawing separately.
+        changed (cursor0.row, cursor0.row + 1, cursor0.col, cursor0.col + 1);
+        changed (_cursor.row, _cursor.row + 1, _cursor.col, _cursor.col + 1);
     }
 
     private void grid_line (MessagePack.Object[] event) {
@@ -146,27 +153,28 @@ class Renderer : GLib.Object {
             //throw std::runtime_error("Multigrid not supported");
             return;
         }
-        uint32 row = (uint32)event[1].u64;
-        uint32 col = (uint32)event[2].u64;
+        int row = (int)event[1].i64;
+        int col = (int)event[2].i64;
+        int col0 = col;
         unowned var cells = event[3].array.objects;
 
-        uint32 hl_id = 0;
+        uint hl_id = 0;
         for (size_t c = 0; c < cells.length; ++c) {
             unowned var cell = cells[c].array.objects;
-            int64 repeat = 1;
+            int repeat = 1;
 
             unowned uint8[] text = cell[0].str.str;
 
             // if repeat is greater than 1, we are guaranteed to send an hl_id
             // https://github.com/neovim/neovim/blob/master/src/nvim/api/ui.c#L483
             if (cell.length > 1) {
-                hl_id = (uint32)cell[1].u64;
+                hl_id = (uint)cell[1].u64;
             }
             if (cell.length > 2) {
-                repeat = cell[2].i64;
+                repeat = (int)cell[2].i64;
             }
 
-            uint32 start_col = col;
+            int start_col = col;
             Cell buf_cell = Cell() {hl_id = hl_id};
             uint8[] char_buf = {};
             // TODO: use string.to_utf8()
@@ -186,7 +194,7 @@ class Renderer : GLib.Object {
             _grid[row, col] = buf_cell;
             ++col;
 
-            uint32 stride = col - start_col;
+            int stride = col - start_col;
             while (--repeat > 0) {
                 for (int i = 0; i < stride; ++i, ++col) {
                     unowned var src = _grid[row, col - stride];
@@ -198,6 +206,8 @@ class Renderer : GLib.Object {
                 }
             }
         }
+
+        changed (row, row + 1, col0, col);
     }
 
     private void grid_scroll (MessagePack.Object[] event) {
@@ -224,6 +234,7 @@ class Renderer : GLib.Object {
                     _grid[row, col] = _grid[rfrom, col];
                 }
             }
+            changed (top, bot - rows, left, right);
         } else if (rows < 0) {
             for (int row = bot - 1; row > top - rows - 1; --row) {
                 var rfrom = row + rows;
@@ -231,6 +242,7 @@ class Renderer : GLib.Object {
                     _grid[row, col] = _grid[rfrom, col];
                 }
             }
+            changed (top + rows, bot, left, right);
         } else {
             //throw std::runtime_error("Rows should not equal 0");
             return;
@@ -283,10 +295,10 @@ class Renderer : GLib.Object {
         }
     }
 
-    private HashTable<uint32, HlAttr?> _attributes = new HashTable<uint32, HlAttr?> (direct_hash, direct_equal);
+    private HashTable<uint, HlAttr?> _attributes = new HashTable<uint, HlAttr?> (direct_hash, direct_equal);
 
     private void hl_attr_define (MessagePack.Object[] event) {
-        uint32 hl_id = (uint32)event[0].u64;
+        uint hl_id = (uint)event[0].u64;
         unowned var rgb_attr = event[1].map.entries;
         var attr = new HlAttr (&_fg, &_bg);
 
@@ -316,7 +328,7 @@ class Renderer : GLib.Object {
     }
 
     // TODO consider immutability of the reference (const in C++)?
-    public unowned HlAttr get_hl_attr (uint32 hl_id) {
+    public unowned HlAttr get_hl_attr (uint hl_id) {
         return _attributes.get (hl_id);
     }
 
@@ -327,8 +339,8 @@ class Renderer : GLib.Object {
                 packer.pack_str (ui_resize.length);
                 packer.pack_str_body (ui_resize);
                 packer.pack_array(2);
-                packer.pack_uint32 (cols);
-                packer.pack_uint32 (rows);
+                packer.pack_int (cols);
+                packer.pack_int (rows);
             },
             (err, resp) => {
                 if (err.type != MessagePack.Type.NIL) {

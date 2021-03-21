@@ -8,6 +8,8 @@ class Grid {
 
     public Grid (Renderer renderer) {
         this.renderer = renderer;
+
+        renderer.changed.connect (draw);
     }
 
     private int rows = 0;
@@ -59,7 +61,7 @@ class Grid {
             );
     }
 
-    public void draw () {
+    public void draw (int top, int bot, int left, int right) {
 
         Cairo.Context ctx = new Cairo.Context (surface);
 
@@ -72,8 +74,8 @@ class Grid {
         var y0 = cell_info.y0;
 
         unowned var grid = renderer.get_grid ();
-        for (int row = 0; row < grid.length[0]; ++row) {
-            for (int col = 0; col < grid.length[1]; ++col) {
+        for (int row = top; row < bot; ++row) {
+            for (int col = left; col < right; ++col) {
                 unowned var cell = grid[row, col];
                 unowned var attr = renderer.get_hl_attr (cell.hl_id);
                 var fg = attr.fg.get_rgb ();
@@ -118,13 +120,16 @@ class Grid {
 
         // Draw primitive block semi-transparent cursor
         unowned var cursor = renderer.get_cursor ();
-        ctx.save ();
-        ctx.set_line_width (w * 0.1);
-        ctx.set_tolerance (0.1);
-        ctx.set_source_rgba (1.0, 1.0, 1.0, 0.5);
-        ctx.rectangle (cursor.col * w, cursor.row * h + y0, w, h);
-        ctx.fill ();
-        ctx.restore ();
+        if (cursor.row >= top && cursor.row < bot &&
+            cursor.col >= left && cursor.col < right) {
+            ctx.save ();
+            ctx.set_line_width (w * 0.1);
+            ctx.set_tolerance (0.1);
+            ctx.set_source_rgba (1.0, 1.0, 1.0, 0.5);
+            ctx.rectangle (cursor.col * w, cursor.row * h + y0, w, h);
+            ctx.fill ();
+            ctx.restore ();
+        }
     }
 
     public void resize (int width, int height, Gdk.Surface orig_surface) {

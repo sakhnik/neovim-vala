@@ -97,7 +97,6 @@ class Window : Gtk.Window {
     }
 
     private void draw_func (DrawingArea drawing_area, Cairo.Context ctx, int width, int height) {
-        grid.draw ();
         ctx.set_source_surface (grid.surface, 0, 0);
         ctx.paint ();
     }

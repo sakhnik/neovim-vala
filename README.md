@@ -7,12 +7,13 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 ## TODO
 
 - [x] Calculate width, height from the window size and chosen font
-- [ ] Redraw only changed parts of the screen, use an offscreen surface like in gtk4-demo
-- [ ] Improve redrawing by combining adjucent cells with the same hl_id
+- [x] Redraw only changed parts of the screen, use an offscreen surface like in gtk4-demo
+- [ ] Improve redrawing by combining adjacent cells with the same hl_id
 - [ ] Test MinGW build
 - [ ] Setup GitHub actions to build for Win32, appimage for Linux
 - [ ] Automatic testing
 - [ ] Cursor shapes
+- [ ] Make redrawing atomic with flush
 - [ ] Handle special keys like arrows, functional keys
 - [ ] Handle the rest of highlight attributes
 - [ ] Handle errors and failures
