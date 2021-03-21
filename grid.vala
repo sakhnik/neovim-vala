@@ -28,7 +28,7 @@ class Grid {
     private class CellInfo {
         public double w;
         public double h;
-        public double y0;
+        public double descent;
     }
     private CellInfo? cell_info;
 
@@ -49,7 +49,7 @@ class Grid {
             cell_info.w = fext.max_x_advance;
         }
         cell_info.h = fext.height;
-        cell_info.y0 = fext.descent;
+        cell_info.descent = fext.descent;
         return cell_info;
     }
 
@@ -65,7 +65,6 @@ class Grid {
 
         Cairo.Context ctx = new Cairo.Context (surface);
 
-        ctx.set_source_rgb (0, 0, 0);
         ctx.set_font_size (20);
         ctx.select_font_face (font_face, FontSlant.NORMAL, FontWeight.NORMAL);
 
@@ -103,7 +102,6 @@ class Grid {
 
         var w = cell_info.w;
         var h = cell_info.h;
-        var y0 = cell_info.y0;
 
         // Draw primitive block semi-transparent cursor
         unowned var cursor = renderer.get_cursor ();
@@ -113,7 +111,7 @@ class Grid {
             ctx.set_line_width (w * 0.1);
             ctx.set_tolerance (0.1);
             ctx.set_source_rgba (1.0, 1.0, 1.0, 0.5);
-            ctx.rectangle (cursor.col * w, cursor.row * h + y0, w, h);
+            ctx.rectangle (cursor.col * w, cursor.row * h, w, h);
             ctx.fill ();
             ctx.restore ();
         }
@@ -122,7 +120,6 @@ class Grid {
     private void draw_range (Cairo.Context ctx, string text, uint hl_id, int row, int col) {
         var w = cell_info.w;
         var h = cell_info.h;
-        var y0 = cell_info.y0;
 
         unowned var attr = renderer.get_hl_attr (hl_id);
         var fg = attr.fg.get_rgb ();
@@ -134,16 +131,22 @@ class Grid {
         }
 
         ctx.save ();
+
+        // Paint the background rectangle
         ctx.translate (col * w, row * h);
         set_source_rgb (ctx, bg);
-        ctx.rectangle (0, y0, w * text.length, h);
+        ctx.rectangle (0, 0, w * text.length, h);
         ctx.fill ();
+
+        // Print the foreground text
         set_source_rgb (ctx, fg);
-        ctx.move_to (0, h);
+        ctx.move_to (0, h - cell_info.descent);
         ctx.select_font_face (font_face,
                               attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
                               attr.bold ? FontWeight.BOLD : FontWeight.NORMAL);
         ctx.show_text (text);
+
+        // Draw highlight attributes
         if (attr.underline) {
             ctx.set_line_width (w * 0.1);
             ctx.move_to (0, h * 1.1);
