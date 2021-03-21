@@ -149,8 +149,9 @@ class Grid {
         // Draw highlight attributes
         if (attr.underline) {
             ctx.set_line_width (w * 0.1);
-            ctx.move_to (0, h * 1.1);
-            ctx.line_to (w * text.length, h * 1.1);
+            double y = h - 0.5 * cell_info.descent;
+            ctx.move_to (0, y);
+            ctx.line_to (w * text.length, y);
             ctx.stroke ();
         }
 
@@ -160,9 +161,12 @@ class Grid {
                 ctx.translate (i * w, 0);
                 ctx.set_source_rgba (1, 0, 0, 0.5);
                 ctx.set_line_width (w * 0.1);
-                ctx.move_to (0, h * 1.1);
-                ctx.curve_to (0.2 * w, h, 0.3 * w, h, 0.5 * w, h * 1.1);
-                ctx.curve_to (0.7 * w, h * 1.2, 0.8 * w, h * 1.2, 1.0 * w, h * 1.1);
+                double y0 = h - cell_info.descent;
+                double y1 = h - 0.5 * cell_info.descent;
+                double y2 = h;
+                ctx.move_to (0, y1);
+                ctx.curve_to (0.2 * w, y0, 0.3 * w, y0, 0.5 * w, y1);
+                ctx.curve_to (0.7 * w, y2, 0.8 * w, y2, 1.0 * w, y1);
                 ctx.stroke ();
                 ctx.restore ();
             }
