@@ -8,7 +8,7 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 
 - [x] Calculate width, height from the window size and chosen font
 - [x] Redraw only changed parts of the screen, use an offscreen surface like in gtk4-demo
-- [ ] Improve redrawing by combining adjacent cells with the same hl_id
+- [x] Improve redrawing by combining adjacent cells with the same hl_id
 - [ ] Test MinGW build
 - [ ] Setup GitHub actions to build for Win32, appimage for Linux
 - [ ] Automatic testing

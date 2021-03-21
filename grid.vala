@@ -69,54 +69,41 @@ class Grid {
         ctx.set_font_size (20);
         ctx.select_font_face (font_face, FontSlant.NORMAL, FontWeight.NORMAL);
 
+        unowned var grid = renderer.get_grid ();
+        for (int row = top; row < bot; ++row) {
+
+            // Accumulate cells into lines with the same hl_id for better text rendering.
+            // TODO: consider following the text beyond `right'.
+            string text = "";
+            uint hl_id = 0;
+            int col0 = 0;
+
+            for (int col = left; col < right; ++col) {
+                unowned var cell = grid[row, col];
+                if (text.length == 0) {
+                    hl_id = cell.hl_id;
+                    text = cell.text != null ? cell.text : " ";
+                    col0 = col;
+                } else {
+                    if (hl_id == cell.hl_id) {
+                        text += cell.text != null ? cell.text : " ";
+                    } else {
+                        draw_range (ctx, text, hl_id, row, col0);
+                        hl_id = cell.hl_id;
+                        text = cell.text != null ? cell.text : " ";
+                        col0 = col;
+                    }
+                }
+            }
+
+            if (text.length != 0) {
+                draw_range (ctx, text, hl_id, row, col0);
+            }
+        }
+
         var w = cell_info.w;
         var h = cell_info.h;
         var y0 = cell_info.y0;
-
-        unowned var grid = renderer.get_grid ();
-        for (int row = top; row < bot; ++row) {
-            for (int col = left; col < right; ++col) {
-                unowned var cell = grid[row, col];
-                unowned var attr = renderer.get_hl_attr (cell.hl_id);
-                var fg = attr.fg.get_rgb ();
-                var bg = attr.bg.get_rgb ();
-                if (attr.reverse) {
-                    var t = fg;
-                    fg = bg;
-                    bg = t;
-                }
-
-                ctx.save ();
-                ctx.translate (col * w, row * h);
-                set_source_rgb (ctx, bg);
-                ctx.rectangle (0, y0, w, h);
-                ctx.fill ();
-                set_source_rgb (ctx, fg);
-                ctx.move_to (0, h);
-                ctx.select_font_face (font_face,
-                                      attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
-                                      attr.bold ? FontWeight.BOLD : FontWeight.NORMAL);
-                ctx.show_text (cell.text);
-                if (attr.underline) {
-                    ctx.set_line_width (w * 0.1);
-                    ctx.move_to (0, h * 1.1);
-                    ctx.line_to (w, h * 1.1);
-                    ctx.stroke ();
-                }
-
-                if (attr.undercurl) {
-                    ctx.save ();
-                    ctx.set_source_rgba (1, 0, 0, 0.5);
-                    ctx.set_line_width (w * 0.1);
-                    ctx.move_to (0, h * 1.1);
-                    ctx.curve_to (0.2 * w, h, 0.3 * w, h, 0.5 * w, h * 1.1);
-                    ctx.curve_to (0.7 * w, h * 1.2, 0.8 * w, h * 1.2, 1.0 * w, h * 1.1);
-                    ctx.stroke ();
-                    ctx.restore ();
-                }
-                ctx.restore ();
-            }
-        }
 
         // Draw primitive block semi-transparent cursor
         unowned var cursor = renderer.get_cursor ();
@@ -130,6 +117,55 @@ class Grid {
             ctx.fill ();
             ctx.restore ();
         }
+    }
+
+    private void draw_range (Cairo.Context ctx, string text, uint hl_id, int row, int col) {
+        var w = cell_info.w;
+        var h = cell_info.h;
+        var y0 = cell_info.y0;
+
+        unowned var attr = renderer.get_hl_attr (hl_id);
+        var fg = attr.fg.get_rgb ();
+        var bg = attr.bg.get_rgb ();
+        if (attr.reverse) {
+            var t = fg;
+            fg = bg;
+            bg = t;
+        }
+
+        ctx.save ();
+        ctx.translate (col * w, row * h);
+        set_source_rgb (ctx, bg);
+        ctx.rectangle (0, y0, w * text.length, h);
+        ctx.fill ();
+        set_source_rgb (ctx, fg);
+        ctx.move_to (0, h);
+        ctx.select_font_face (font_face,
+                              attr.italic ? FontSlant.ITALIC : FontSlant.NORMAL,
+                              attr.bold ? FontWeight.BOLD : FontWeight.NORMAL);
+        ctx.show_text (text);
+        if (attr.underline) {
+            ctx.set_line_width (w * 0.1);
+            ctx.move_to (0, h * 1.1);
+            ctx.line_to (w * text.length, h * 1.1);
+            ctx.stroke ();
+        }
+
+        if (attr.undercurl) {
+            for (int i = 0; i < text.length; ++i) {
+                ctx.save ();
+                ctx.translate (i * w, 0);
+                ctx.set_source_rgba (1, 0, 0, 0.5);
+                ctx.set_line_width (w * 0.1);
+                ctx.move_to (0, h * 1.1);
+                ctx.curve_to (0.2 * w, h, 0.3 * w, h, 0.5 * w, h * 1.1);
+                ctx.curve_to (0.7 * w, h * 1.2, 0.8 * w, h * 1.2, 1.0 * w, h * 1.1);
+                ctx.stroke ();
+                ctx.restore ();
+            }
+        }
+
+        ctx.restore ();
     }
 
     public void resize (int width, int height, Gdk.Surface orig_surface) {
