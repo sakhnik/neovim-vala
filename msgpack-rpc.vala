@@ -45,6 +45,9 @@ class MsgpackRpc : GLib.Object {
                 _unp.reserve_buffer (1024);
                 size_t bytes_read;
                 channel.read_chars ((char[])_unp.buffer (), out bytes_read);
+                if (bytes_read == 0) {
+                    return false;
+                }
                 _handle_data(bytes_read);
             } catch (IOChannelError e) {
                 print ("IOChannelError: %s\n", e.message);
