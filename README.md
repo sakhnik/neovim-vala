@@ -17,6 +17,9 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [ ] Handle special keys like arrows, functional keys
 - [ ] Handle the rest of highlight attributes
 - [ ] Handle errors and failures
+- [ ] Use pango for text layout
 - [ ] Allow selecting GUI font
 - [ ] Consider externalizing popup menus to add scrollbars
 - [ ] Configuration of fonts and behaviour tweaking (consider using lua)
+- [ ] Mouse support
+- [ ] Change mouse pointer on busy_start/busy_stop notifications
