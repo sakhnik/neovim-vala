@@ -63,6 +63,9 @@ class Window : Gtk.Window {
             case Gdk.Key.Tab:
                 input = "tab";
                 break;
+            case Gdk.Key.less:
+                input = "lt";
+                break;
         }
 
         if (0 != (Gdk.ModifierType.CONTROL_MASK & state)) {
