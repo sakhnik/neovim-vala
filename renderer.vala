@@ -242,7 +242,7 @@ class Renderer : GLib.Object {
                     _grid[row, col] = _grid[rfrom, col];
                 }
             }
-            changed (top + rows, bot, left, right);
+            changed (top - rows, bot, left, right);
         } else {
             //throw std::runtime_error("Rows should not equal 0");
             return;
