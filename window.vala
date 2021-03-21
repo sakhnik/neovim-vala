@@ -60,6 +60,9 @@ class Window : Gtk.Window {
             case Gdk.Key.BackSpace:
                 input = "bs";
                 break;
+            case Gdk.Key.Tab:
+                input = "tab";
+                break;
         }
 
         if (0 != (Gdk.ModifierType.CONTROL_MASK & state)) {
