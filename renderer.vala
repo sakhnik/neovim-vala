@@ -249,12 +249,12 @@ class Renderer : GLib.Object {
         }
     }
 
-    private uint32 _bg = 0;
+    public uint32 bg { get; private set; default = 0; }
     private uint32 _fg = 0xffffff;
 
     private void default_colors_set (MessagePack.Object[] param) {
         _fg = (uint32)param[0].u64;
-        _bg = (uint32)param[1].u64;
+        bg = (uint32)param[1].u64;
     }
 
     public struct Color {

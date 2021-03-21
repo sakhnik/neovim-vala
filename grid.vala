@@ -9,6 +9,7 @@ class Grid {
     public Grid (Renderer renderer) {
         this.renderer = renderer;
 
+        //renderer.flush.connect (flush);
         renderer.changed.connect (draw);
     }
 
@@ -61,7 +62,7 @@ class Grid {
             );
     }
 
-    public void draw (int top, int bot, int left, int right) {
+    private void draw (int top, int bot, int left, int right) {
 
         Cairo.Context ctx = new Cairo.Context (surface);
 
@@ -179,6 +180,7 @@ class Grid {
         var old_surface = surface;
         surface = orig_surface.create_similar_surface (Cairo.Content.COLOR_ALPHA, width, height);
         Cairo.Context ctx = new Cairo.Context (surface);
+
         if (old_surface != null) {
             ctx.set_source_surface (old_surface, 0, 0);
             ctx.paint ();
@@ -187,6 +189,19 @@ class Grid {
         cell_info = calculate_cell_info (ctx);
         int new_rows = (int)(height / cell_info.h);
         int new_cols = (int)(width / cell_info.w);
+
+        // Make sure to paint the edges beyond the cells with the actual background color.
+        set_source_rgb (ctx, renderer.bg);
+        double w = cell_info.w;
+        double h = cell_info.h;
+
+        double x = w * int.min(new_cols, cols);
+        double y = h * int.min(new_rows, rows);
+
+        ctx.rectangle (0, y, width, height - y);
+        ctx.fill ();
+        ctx.rectangle (x, 0, width - x, height);
+        ctx.fill ();
 
         if (new_rows == rows && new_cols == cols) {
             return;
