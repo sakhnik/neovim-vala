@@ -23,3 +23,4 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [ ] Configuration of fonts and behaviour tweaking (consider using lua)
 - [ ] Mouse support
 - [ ] Change mouse pointer on busy_start/busy_stop notifications
+- [ ] Create window after neovim has been launched and initialized to avoid white flash during startup
