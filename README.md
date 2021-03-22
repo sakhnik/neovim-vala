@@ -10,7 +10,7 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [x] Redraw only changed parts of the screen, use an offscreen surface like in gtk4-demo
 - [x] Improve redrawing by combining adjacent cells with the same hl_id
 - [x] Test MinGW build
-- [ ] Setup GitHub actions to build for Win32, appimage for Linux
+- [x] Setup GitHub actions to build for Win32
 - [ ] Automatic testing
 - [ ] Cursor shapes
 - [ ] Properly close the editor when the window is about to be closed
@@ -25,3 +25,4 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [ ] Mouse support
 - [ ] Change mouse pointer on busy_start/busy_stop notifications
 - [ ] Create window after neovim has been launched and initialized to avoid white flash during startup
+- [ ] Setup automatic releases (win32, appimage)

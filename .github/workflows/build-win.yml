@@ -28,5 +28,5 @@ jobs:
       if: ${{ always() }}
       uses: actions/upload-artifact@v2
       with:
-        name: win64.zip
+        name: win64
         path: dist/nvv-win64.zip
