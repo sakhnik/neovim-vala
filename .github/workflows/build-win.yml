@@ -1,0 +1,16 @@
+name: Test
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install MSYS2
+      run: |
+        choco install msys2
