@@ -19,4 +19,4 @@ jobs:
         MSYSTEM: MINGW64
       run: |
         Write-Host $env:GITHUB_WORKSPACE
-        c:\tools\msys64\usr\bin\bash -l -c "$GITHUB_WORKSPACE/scripts/build-mingw.sh"
+        c:\tools\msys64\usr\bin\bash -l -c "/$($env:GITHUB_WORKSPACE -replace ':?\\','/')/scripts/build-mingw.sh"
