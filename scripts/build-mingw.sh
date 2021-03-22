@@ -1,3 +1,15 @@
-#!/bin/bash
+#!/bin/bash -e
 
-pacman -S --noconfirm mingw-w64-x86_64-vala mingw-w64-x86_64-gtk4 mingw-w64-x86_64-msgpack-c
+pacman -S --noconfirm \
+  mingw-w64-x86_64-vala \
+  mingw-w64-x86_64-gtk4 \
+  mingw-w64-x86_64-msgpack-c \
+  mingw-w64-x86_64-pkg-config \
+  mingw-w64-x86_64-ninja \
+  mingw-w64-x86_64-meson
+
+echo $PATH
+
+meson setup build --buildtype=release
+cd build
+ninja
