@@ -13,15 +13,20 @@ jobs:
       with:
         submodules: true
 
+    - name: Prepare environment
+      id: prep
+      run: |
+        Write-Host "::set-env name=WORKSPACE_MSYS2::/$($env:GITHUB_WORKSPACE -replace ':?\\','/')"
+
     - name: Install MSYS2
       run: choco install msys2
 
     - name: Install Vala and gtk4 in MinGW
       run: |
-        c:\tools\msys64\usr\bin\bash -l -c "/$($env:GITHUB_WORKSPACE -replace ':?\\','/')/scripts/install-mingw.sh"
+        c:\tools\msys64\usr\bin\bash -l -c "${env:WORKSPACE_MSYS2}/scripts/install-mingw.sh"
 
     - name: Build
       env:
         MSYSTEM: MINGW64
       run: |
-        c:\tools\msys64\usr\bin\bash -l -c "/$($env:GITHUB_WORKSPACE -replace ':?\\','/')/scripts/build.sh"
+        c:\tools\msys64\usr\bin\bash -l -c "${env:WORKSPACE_MSYS2}/scripts/build.sh"

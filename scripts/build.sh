@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-if [[ "$GITHUB_WORKSPACE" ]]; then
-  cd "/$(sed 's/[:\]\+/\//g' <<<"$GITHUB_WORKSPACE")"
+if [[ "$WORKSPACE_MSYS2" ]]; then
+  cd "$WORKSPACE_MSYS2"
 fi
 
 meson setup build --buildtype=release
