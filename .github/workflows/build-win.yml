@@ -16,7 +16,7 @@ jobs:
     - name: Prepare environment
       id: prep
       run: |
-        Write-Host "::set-env name=WORKSPACE_MSYS2::/$($env:GITHUB_WORKSPACE -replace ':?\\','/')"
+        Add-Content -Path $env:GITHUB_ENV "WORKSPACE_MSYS2=/$($env:GITHUB_WORKSPACE -replace ':?\\','/')"
 
     - name: Install MSYS2
       run: choco install msys2
