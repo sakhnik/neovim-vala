@@ -12,5 +12,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install MSYS2
-      run: |
-        choco install msys2
+      run: choco install msys2
+
+    - name: Build in MinGW
+      run: c:\tools\msys64\mingw64 -c "scripts/build-mingw.sh"
