@@ -18,4 +18,4 @@ jobs:
       env:
         MSYSTEM: MINGW64
       run: |
-        c:\tools\msys64\usr\bin\bash -l -c "scripts/build-mingw.sh"
+        c:\tools\msys64\usr\bin\bash -l -c "$GITHUB_WORKSPACE/scripts/build-mingw.sh"
