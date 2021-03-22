@@ -1,4 +1,7 @@
 
+// MessagePack.Object.print () is broken, and I can't fix the order of arguments
+//extern void my_print (MessagePack.Object o, GLib.FileStream out);
+
 class Renderer : GLib.Object {
 
     private unowned MsgpackRpc _rpc;
@@ -105,6 +108,10 @@ class Renderer : GLib.Object {
                 handler = grid_scroll;
             } else if (memEqual (subtype, "win_viewport".data)) {
                 // just info to display, can skip
+            } else if (memEqual (subtype, "mode_info_set".data)) {
+                //my_print (event[1], GLib.stdout);
+            } else if (memEqual (subtype, "mode_change".data)) {
+                handler = mode_change;
             } else {
                 print ("Ignoring redraw %.*s\n", subtype.length, subtype);
                 continue;
@@ -350,5 +357,13 @@ class Renderer : GLib.Object {
                     //throw new SpawnError.FAILED ("");
                 }
             });
+    }
+
+    public string mode { get; private set; }
+
+    private void mode_change (MessagePack.Object[] event) {
+        unowned var m = event[0].str.str;
+        mode = "%.*s".printf (m.length, m);
+        changed (_cursor.row, _cursor.row + 1, _cursor.col, _cursor.col + 1);
     }
 }

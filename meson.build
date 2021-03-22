@@ -16,6 +16,7 @@ dependencies = [
 ]
 
 sources = files(
+    'hacks.c',
     'main.vala',
     'msgpack-rpc.vala',
     'renderer.vala',

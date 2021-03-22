@@ -122,10 +122,17 @@ class Grid {
         if (cursor.row >= top && cursor.row < bot &&
             cursor.col >= left && cursor.col < right) {
             ctx.save ();
-            ctx.set_line_width (w * 0.1);
             ctx.set_tolerance (0.1);
+            ctx.set_line_width (w * 0.1);
             ctx.set_source_rgba (1.0, 1.0, 1.0, 0.5);
-            ctx.rectangle (cursor.col * w, cursor.row * h, w, h);
+            ctx.translate (cursor.col * w, cursor.row * h);
+            if (renderer.mode == "insert") {
+                ctx.rectangle (0, 0, 0.2 * w, h);
+            } else if (renderer.mode == "replace" || renderer.mode == "operator") {
+                ctx.rectangle (0, 0.75 * h, w, 0.25 * h);
+            } else {
+                ctx.rectangle (0, 0, w, h);
+            }
             ctx.fill ();
             ctx.restore ();
         }
