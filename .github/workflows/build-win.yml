@@ -15,4 +15,7 @@ jobs:
       run: choco install msys2
 
     - name: Build in MinGW
-      run: c:\tools\msys64\mingw64 -c "scripts/build-mingw.sh"
+      env:
+        MSYSTEM: MINGW64
+      run: |
+        c:\tools\msys64\usr\bin\bash -l -c "scripts/build-mingw.sh"
