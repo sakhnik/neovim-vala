@@ -12,18 +12,20 @@ Turns out, it's quite easy to code after experiments with [SpyUI](https://github
 - [x] Test MinGW build
 - [x] Setup GitHub actions to build for Win32
 - [x] Cursor shapes
-- [ ] Automatic testing
+- [ ] Use pango for text layout
+- [ ] Log to a file instead of stdout
 - [ ] Properly close the editor when the window is about to be closed
+- [ ] Allow selecting GUI font
+- [ ] Mouse support
+- [ ] Fast zoom with mouse wheel
+- [ ] Automatic testing
 - [ ] Make redrawing atomic with flush
+- [ ] Get rid of console in windows
 - [ ] Handle special keys like arrows, functional keys
 - [ ] Handle the rest of highlight attributes
 - [ ] Handle errors and failures
-- [ ] Use pango for text layout
-- [ ] Allow selecting GUI font
-- [ ] Fast zoom with mouse wheel
 - [ ] Consider externalizing popup menus to add scrollbars
 - [ ] Configuration of fonts and behaviour tweaking (consider using lua)
-- [ ] Mouse support
 - [ ] Change mouse pointer on busy_start/busy_stop notifications
 - [ ] Create window after neovim has been launched and initialized to avoid white flash during startup
 - [ ] Setup automatic releases (win32, appimage)
