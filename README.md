@@ -1,6 +1,8 @@
 # neovim-vala
 NeoVim UI implemented in gtk4/vala
 
+The project is **abandoned** in favour of [neovim-sdl2](http://github.com/sakhnik/neovim-sdl2).
+
 I need an easy deployable low latency UI for NeoVim in Windows. It should be both simple and flexible.
 Turns out, it's quite easy to code after experiments with [SpyUI](https://github.com/sakhnik/nvim-gdb/blob/07aa4b435a832b122154a157ab6892ac4efb81fb/test/spy_ui.py).
 
